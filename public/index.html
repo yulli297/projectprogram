@@ -36,6 +36,17 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--main)}
 .group-grid button.on{background:var(--main);color:#fff}
 .class-grid{grid-template-columns:repeat(5,1fr)}
 .login-warn{margin-top:14px;background:#fff1ee;border:2px solid #f3b8aa;color:#a33a22;border-radius:12px;padding:10px 12px;font-size:15px;line-height:1.55}
+/* 화면 높이가 낮은 태블릿 가로 화면: 입장 화면을 한눈에 */
+@media (max-height:720px){
+  #login{padding:8px}
+  .login-box{padding:16px 26px}
+  .login-box h1{font-size:28px}
+  .login-box p.sub{margin:0 0 8px}
+  .group-grid{margin:4px 0 8px}
+  .group-grid button{padding:8px 0;font-size:17px}
+  .login-warn{margin-top:8px;padding:6px 10px;font-size:14px}
+  .login-box .btn{margin-top:10px!important;padding:10px!important}
+}
 .login-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left}
 .login-row input{letter-spacing:2px}
 .pin-list{display:flex;flex-wrap:wrap;gap:6px}
@@ -972,7 +983,7 @@ function renderStep2(){
 
     <div class="panel prompt-box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <h3 style="margin:0">🤖 AI 주문서</h3><span id="dStatus" class="status no"></span>
+        <h3 style="margin:0;white-space:nowrap">🤖 AI 주문서</h3><span id="dStatus" class="status no"></span>
       </div>
       <div class="toggle">
         <button class="${D2.withSketch?"on":""}" onclick="App.sketchMode(true)">✏️ 스케치 그림도 함께 넣기</button>
