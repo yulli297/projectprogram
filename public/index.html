@@ -34,6 +34,12 @@ input:focus,textarea:focus,select:focus{outline:none;border-color:var(--main)}
 .group-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0 16px}
 .group-grid button{padding:14px 0;border-radius:12px;background:#eef5ea;font-family:'Jua';font-size:20px;color:var(--main2);border:2px solid transparent}
 .group-grid button.on{background:var(--main);color:#fff}
+.class-grid{grid-template-columns:repeat(5,1fr)}
+.login-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left}
+.login-row input{letter-spacing:2px}
+.pin-list{display:flex;flex-wrap:wrap;gap:6px}
+.pin-list span{background:#f3f6f2;border-radius:999px;padding:4px 6px 4px 12px;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.code-big{font-family:'Jua';font-size:40px;letter-spacing:6px;color:var(--main2);text-align:center;background:#f0f9f2;border-radius:12px;padding:6px;margin:6px 0}
 .login-box label{display:block;text-align:left;font-weight:700;margin-bottom:6px}
 .teacher-link{margin-top:16px;font-size:13px;color:var(--sub);background:none;text-decoration:underline}
 
@@ -226,10 +232,16 @@ main{padding:18px 22px 40px;max-width:1400px;margin:0 auto}
   <div class="login-box">
     <h1>🌱 그린 아크 프로젝트</h1>
     <p class="sub">기후 위기를 이겨내는 우리 모둠의 미래 마을 만들기</p>
+    <label>우리 반</label>
+    <div class="group-grid class-grid" id="classGrid"></div>
     <label>우리 모둠</label>
     <div class="group-grid" id="groupGrid"></div>
-    <label>이름</label>
-    <input id="nameInput" placeholder="이름을 입력하세요" maxlength="10">
+    <div class="login-row">
+      <div><label>이름 (실명)</label><input id="nameInput" placeholder="예) 김민수" maxlength="10"></div>
+      <div><label>반 입장 코드</label><input id="codeInput" inputmode="numeric" placeholder="칠판에 있어요" maxlength="8"></div>
+    </div>
+    <label style="margin-top:12px">내 비밀번호 (숫자 4자리)</label>
+    <input id="pinInput" type="password" inputmode="numeric" maxlength="4" placeholder="처음 들어오면 지금 정하는 번호가 내 비밀번호가 돼요" onkeydown="if(event.key==='Enter')App.enter()">
     <button class="btn" style="width:100%;margin-top:16px;font-size:17px;padding:13px" onclick="App.enter()">입장하기</button>
     <button class="teacher-link" onclick="App.teacherLogin()">선생님 화면</button>
     <div style="margin-top:10px" id="modeInfo"></div>
@@ -271,7 +283,15 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "3493251694",
   appId: "1:3493251694:web:996a9a8e6548900200747f"
 };
-const TEACHER_PW = "1234";   // 선생님 화면 비밀번호
+const CLASS_COUNT = 5;        // 반 수 (반마다 데이터가 따로 저장돼요)
+const TEACHER_PW = {          // 반별 선생님 화면 비밀번호 (꼭 바꿔서 쓰세요)
+  1: "ark1-2026",
+  2: "ark2-2026",
+  3: "ark3-2026",
+  4: "ark4-2026",
+  5: "ark5-2026",
+};
+let CLS = 0;                  // 지금 들어온 반 (입장할 때 정해져요)
 const UNLOCK_ALL = false;     // true로 바꾸면 모든 단계가 열린 확인용 화면이 됩니다
 const GROUP_COUNT = 6;        // 모둠 수
 const ROOT = "greenark";      // 저장 위치 이름(반이 여러 개면 바꿔서 사용)
@@ -404,7 +424,7 @@ if (useFirebase){
   const fs = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
   const app = initializeApp(FIREBASE_CONFIG);
   const db = fs.getFirestore(app);
-  const ref = id => fs.doc(db, ROOT, id);
+  const ref = id => fs.doc(db, ROOT, "c"+CLS+"_"+id);   // 반마다 따로: c1_g1, c2_g1 …
   DB = {
     watch(id, cb){ return fs.onSnapshot(ref(id), s => cb(s.exists()? s.data() : {})); },
     async get(id){ const s = await fs.getDoc(ref(id)); return s.exists()? s.data() : {}; },
@@ -419,7 +439,7 @@ if (useFirebase){
   };
 } else {
   // 체험 모드: 이 기기의 브라우저에만 저장 (같은 기기 여러 탭끼리는 공유)
-  const key = id => ROOT+"_"+id;
+  const key = id => ROOT+"_c"+CLS+"_"+id;
   const subs = {};
   const read = id => { try{ return JSON.parse(localStorage.getItem(key(id))||"{}"); }catch(e){ return {}; } };
   const fire = id => (subs[id]||[]).forEach(cb => cb(read(id)));
@@ -454,8 +474,14 @@ function dialog(msg, withInput){
 const ask = msg => dialog(msg, false);
 const tagHTML = tags => `<div class="tags">${tags.map(t=>`<span class="tag" style="background:${CATS[t].color}">${CATS[t].icon} ${CATS[t].name}</span>`).join("")}</div>`;
 // 개인 메모는 각자 기기에 저장 (서버 사용 안 함)
-const memoKey = () => `${ROOT}_memo_${S.group}_${S.name}`;
+const memoKey = () => `${ROOT}_memo_c${CLS}_${S.group}_${S.name}`;
 function loadMemos(){ try{ return JSON.parse(localStorage.getItem(memoKey())||"{}"); }catch(e){ return {}; } }
+// 비밀번호는 그대로 저장하지 않고 바꾼 값(해시)만 저장해요
+function pinHash(name, pin){
+  let h = 2166136261; const str = `ga|${CLS}|${name}|${pin}`;
+  for(let i=0;i<str.length;i++){ h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h>>>0).toString(36);
+}
 function saveMemos(m){ try{ localStorage.setItem(memoKey(), JSON.stringify(m)); }catch(e){} }
 
 /* =========================================================
@@ -465,6 +491,12 @@ const S = { group:null, name:"", stage:1, view:1, sub:"gallery", filter:"all", g
 
 const App = {
   init(){
+    $("#classGrid").innerHTML = Array.from({length:CLASS_COUNT},(_,i)=>`<button data-c="${i+1}">${i+1}반</button>`).join("");
+    $("#classGrid").onclick = e => {
+      const b = e.target.closest("button"); if(!b) return;
+      CLS = +b.dataset.c;
+      document.querySelectorAll("#classGrid button").forEach(x=>x.classList.toggle("on", x===b));
+    };
     $("#groupGrid").innerHTML = Array.from({length:GROUP_COUNT},(_,i)=>`<button data-g="${i+1}">${i+1}모둠</button>`).join("");
     $("#groupGrid").onclick = e => {
       const b = e.target.closest("button"); if(!b) return;
@@ -474,19 +506,45 @@ const App = {
     $("#modeInfo").innerHTML = useFirebase ? "" : `<span class="mode-badge">체험 모드 · 이 기기에만 저장돼요</span>`;
     try{
       const last = JSON.parse(localStorage.getItem(ROOT+"_me")||"null");
-      if(last){ $("#nameInput").value = last.name; const b=document.querySelector(`#groupGrid button[data-g="${last.group}"]`); if(b) b.click(); }
+      if(last){
+        $("#nameInput").value = last.name || ""; $("#codeInput").value = last.code || "";
+        document.querySelector(`#classGrid button[data-c="${last.cls}"]`)?.click();
+        document.querySelector(`#groupGrid button[data-g="${last.group}"]`)?.click();
+      }
     }catch(e){}
   },
 
-  enter(){
-    const name = $("#nameInput").value.trim();
+  async enter(){
+    if(App.busy) return;
+    const name = $("#nameInput").value.trim().replace(/\s+/g,"");
+    const code = $("#codeInput").value.trim(), pin = $("#pinInput").value.trim();
+    if(!CLS) return toast("반을 골라 주세요");
     if(!S.group) return toast("모둠을 골라 주세요");
     if(!name) return toast("이름을 입력해 주세요");
+    if(!code && !UNLOCK_ALL) return toast("반 입장 코드를 입력해 주세요");
+    if(!/^\d{4}$/.test(pin)) return toast("비밀번호는 숫자 4자리예요");
+    App.busy = true;
+    try{
+      const st = await DB.get("settings");
+      if(!UNLOCK_ALL){      // 확인용 화면에서는 입장 코드를 건너뛰어요
+        if(!st.code) return toast(`${CLS}반 선생님이 아직 입장 코드를 정하지 않았어요`);
+        if(code !== st.code) return toast("반 입장 코드가 달라요");
+      }
+      const g = await DB.get("g"+S.group), h = pinHash(name, pin);
+      const saved = (g.pins||{})[name];
+      if(saved && saved !== h) return toast("비밀번호가 달라요. 잊었으면 선생님께 말해요");
+      if(!saved){
+        const ok = await ask(`${CLS}반 ${S.group}모둠에 '${name}'(으)로 처음 들어왔어요. 이름이 맞나요? 지금 입력한 번호가 내 비밀번호가 돼요.`);
+        if(!ok) return;
+        await DB.update("g"+S.group, d => { (d.pins ||= {})[name] = h; });
+      }
+    } finally { App.busy = false; }
+    $("#pinInput").value = "";
     S.name = name;
-    try{ localStorage.setItem(ROOT+"_me", JSON.stringify({group:S.group,name})); }catch(e){}
+    try{ localStorage.setItem(ROOT+"_me", JSON.stringify({cls:CLS, group:S.group, name, code})); }catch(e){}
     $("#login").classList.add("hidden");
     $("#studentApp").classList.remove("hidden");
-    $("#meInfo").innerHTML = `<b>${S.group}모둠</b> · ${esc(name)}`;
+    $("#meInfo").innerHTML = `<b>${CLS}반 ${S.group}모둠</b> · ${esc(name)} <button class="btn ghost sm" style="margin-left:6px" onclick="location.reload()">나가기</button>`;
     // 실시간으로 받는 것은 '설정 1개 + 우리 모둠 1개' 뿐
     DB.watch("settings", d => {
       const pv = S.view, first = !S.ready; S.ready = true;
@@ -674,8 +732,10 @@ const App = {
 
   /* ----- 교사 ----- */
   async teacherLogin(){
-    const pw = await dialog("선생님 비밀번호", true);
-    if(pw !== TEACHER_PW) { if(pw!==null) toast("비밀번호가 달라요"); return; }
+    if(!CLS) return toast("먼저 위에서 반을 골라 주세요");
+    const pw = await dialog(`${CLS}반 선생님 비밀번호`, true);
+    if(pw !== TEACHER_PW[CLS]) { if(pw!==null) toast("비밀번호가 달라요"); return; }
+    $("#teacherApp .logo").textContent = `🌱 그린 아크 프로젝트 · ${CLS}반 선생님`;
     $("#login").classList.add("hidden");
     $("#teacherApp").classList.remove("hidden");
     T.init();
@@ -1440,15 +1500,26 @@ window.V = V;
 const T = {
   stage:1, g:1, data:null,
   init(){
-    DB.watch("settings", d => { T.stage = d.stage||1; T.lock = !!d.lock; T.render(); });
-    let last = 0; try{ last = +localStorage.getItem("ga_t_g") || 0; }catch(e){}
+    DB.watch("settings", d => { T.stage = d.stage||1; T.lock = !!d.lock; T.code = d.code||""; T.render(); });
+    let last = 0; try{ last = +localStorage.getItem("ga_t_g"+CLS) || 0; }catch(e){}
     if(last) T.load(last);       // 새로고침하면 보던 모둠을 한 번 다시 불러와요
+  },
+  async setCode(){
+    const v = (await dialog("반 입장 코드 (숫자 4~8자리)", true) || "").trim();
+    if(!v) return;
+    if(!/^\d{4,8}$/.test(v)) return toast("숫자 4~8자리로 정해 주세요");
+    await DB.update("settings", d => { d.code = v; }); toast("입장 코드를 정했어요");
+  },
+  async resetPin(name){
+    if(!await ask(`'${name}' 학생의 비밀번호를 지울까요? 다음에 들어올 때 새로 정해요.`)) return;
+    await DB.update("g"+T.g, d => { if(d.pins) delete d.pins[name]; });
+    T.load(T.g);
   },
   async toggleLock(){ await DB.update("settings", d => { d.lock = !d.lock; }); },
   async setStage(n){ await DB.update("settings", d => { d.stage = n; }); toast(`${n}단계까지 열었어요`); },
   async load(g){
     T.g = g; T.data = null; T.render();
-    try{ localStorage.setItem("ga_t_g", g); }catch(e){}
+    try{ localStorage.setItem("ga_t_g"+CLS, g); }catch(e){}
     const d = await DB.get("g"+g); if(T.g!==g) return;
     T.data = d; T.render();
     if(await ensureImgs(g, d.imgs) && T.g===g) T.render();
@@ -1477,8 +1548,8 @@ const T = {
     T.load(T.g);
   },
   async resetGroup(){
-    if(!await ask(`${T.g}모둠의 보드, 마을 컨셉, 건물 목록, 설계 카드, 마을을 모두 지울까요?`)) return;
-    await DB.update("g"+T.g, d => { d.notes = []; d.buildings = []; d.designs = {}; d.imgs = {}; d.concept = null; });
+    if(!await ask(`${T.g}모둠의 보드, 마을 컨셉, 건물 목록, 설계 카드, 마을, 학생 비밀번호를 모두 지울까요?`)) return;
+    await DB.update("g"+T.g, d => { d.notes = []; d.buildings = []; d.designs = {}; d.imgs = {}; d.concept = null; d.pins = {}; });
     await DB.update("v"+T.g, d => { d.items = {}; d.ground = {}; d.likes = {}; });
     T.load(T.g);
   },
@@ -1487,7 +1558,11 @@ const T = {
     $("#teacherMain").innerHTML = `
     <div class="t-grid">
       <div class="panel">
-        <h3>🚦 단계 열기</h3>
+        <h3>🔑 ${CLS}반 입장 코드</h3>
+        ${T.code?`<div class="code-big">${esc(T.code)}</div>`:`<p style="background:#fff4d6;border-radius:10px;padding:8px 10px;font-size:14px;margin:6px 0">아직 없어요. 코드를 정해야 학생이 들어올 수 있어요.</p>`}
+        <button class="btn ${T.code?"ghost":""} sm" style="width:100%;margin-bottom:6px" onclick="T.setCode()">${T.code?"코드 바꾸기":"입장 코드 정하기"}</button>
+        <p style="font-size:13px;color:var(--sub);margin-bottom:6px">칠판에 적어 주세요. 다른 반 학생은 이 코드를 몰라서 못 들어와요.</p>
+        <h3 style="margin-top:16px">🚦 단계 열기</h3>
         <p style="font-size:13px;color:var(--sub);margin-bottom:10px">누른 단계까지 학생에게 열려요.</p>
         <div class="stage-btns">${STEPS.map(s=>`<button class="${T.stage===s.n?"on":""}" onclick="T.setStage(${s.n})">${s.icon} ${s.n}단계 · ${s.name}${T.stage>=s.n?" ✓":""}</button>`).join("")}</div>
         <h3 style="margin-top:16px">🔒 마을 잠금</h3>
@@ -1501,11 +1576,13 @@ const T = {
       <div class="panel">
         <h3>👀 모둠 살펴보기</h3>
         <div class="gsel">${Array.from({length:GROUP_COUNT},(_,i)=>`<button class="btn sm ${d&&T.g===i+1?"":"ghost"}" onclick="T.load(${i+1})">${i+1}모둠 불러오기</button>`).join("")}</div>
-        ${!d ? `<p style="color:var(--sub)">${T.g&&localStorage.getItem("ga_t_g")?"불러오는 중…":"모둠을 눌러 불러오세요."}</p>` : `
+        ${!d ? `<p style="color:var(--sub)">${T.g&&localStorage.getItem("ga_t_g"+CLS)?"불러오는 중…":"모둠을 눌러 불러오세요."}</p>` : `
           <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px;gap:6px;flex-wrap:wrap">
             <b style="font-size:18px">${T.g}모둠 · 포스트잇 ${(d.notes||[]).length}장 · 건물 ${(d.buildings||[]).length}개</b>
             <span style="display:flex;gap:6px"><button class="btn sm ghost" onclick="T.load(${T.g})">🔄 새로고침</button><button class="btn sm red" onclick="T.resetGroup()">이 모둠 초기화</button></span>
           </div>
+          <div style="margin-bottom:12px"><b>🔐 들어온 학생</b> <span style="font-size:13px;color:var(--sub)">비밀번호를 잊은 학생은 [초기화]를 누르면 다시 정할 수 있어요</span>
+            <div class="pin-list" style="margin-top:6px">${Object.keys(d.pins||{}).map(n=>`<span>${esc(n)} <button class="btn sm ghost" style="padding:2px 8px" onclick="T.resetPin(${JSON.stringify(n).replace(/"/g,"&quot;")})">초기화</button></span>`).join("") || `<span style="color:var(--sub)">아직 없어요</span>`}</div></div>
           <div class="panel concept" style="padding:12px">${d.concept?`<div class="cview"><h2>🌱 ${esc(d.concept.name)}</h2><div class="theme">💡 ${esc(d.concept.theme)}</div><p>${esc(d.concept.desc)}</p></div>`:`<b>🌱 마을 컨셉</b> <span style="color:var(--sub)">아직 정하지 않았어요</span>`}</div>
           <div class="cause"><h3>🌍 기후 난민은 왜 생길까?</h3><div class="notes">${(d.notes||[]).filter(n=>n.cat==="cause").map(n=>`
             <div class="note"><div class="from">${esc(n.by)} · ❤️${n.hearts?.length||0}</div>${esc(n.idea)}
