@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>그린 아크 마을 프로젝트</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f7ef; --paper:#fff; --ink:#2b3a2e; --sub:#6b7a6d; --line:#dfe8d9;
+  --main:#3f8f5a; --main2:#2f6f45;
+  --home:#e07b4f; --food:#4fa357; --energy:#e3a91b; --water:#3a8bd1;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh}
+h1,h2,h3,.jua{font-family:'Jua',sans-serif;font-weight:400}
+button{font-family:inherit;cursor:pointer;border:none}
+input,textarea,select{font-family:inherit;font-size:15px;border:2px solid var(--line);border-radius:10px;padding:9px 11px;width:100%;background:#fff;color:var(--ink)}
+textarea{resize:vertical;min-height:62px}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--main)}
+.hidden{display:none!important}
+.btn{background:var(--main);color:#fff;padding:10px 18px;border-radius:12px;font-size:15px;font-weight:700}
+.btn:hover{background:var(--main2)}
+.btn.ghost{background:#fff;color:var(--main);border:2px solid var(--main)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn.red{background:#d9534f}
+
+/* ---------- 입장 화면 ---------- */
+#login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:linear-gradient(180deg,#bfe3f5 0%,#e3f4dc 60%,#a9d79a 100%)}
+.login-box{background:#fff;border-radius:24px;padding:32px 36px;width:min(560px,100%);box-shadow:0 10px 30px rgba(0,0,0,.12);text-align:center}
+.login-box h1{font-size:38px;color:var(--main2)}
+.login-box p.sub{color:var(--sub);margin:4px 0 22px}
+.group-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin:10px 0 16px}
+.group-grid button{padding:14px 0;border-radius:12px;background:#eef5ea;font-family:'Jua';font-size:20px;color:var(--main2);border:2px solid transparent}
+.group-grid button.on{background:var(--main);color:#fff}
+.login-box label{display:block;text-align:left;font-weight:700;margin-bottom:6px}
+.teacher-link{margin-top:16px;font-size:13px;color:var(--sub);background:none;text-decoration:underline}
+
+/* ---------- 상단 ---------- */
+header{background:#fff;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:16px;padding:10px 20px;position:sticky;top:0;z-index:20}
+header .logo{font-family:'Jua';font-size:24px;color:var(--main2);white-space:nowrap}
+.steps{display:flex;gap:6px;flex:1;justify-content:center}
+.step{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;background:#eef2ec;color:var(--sub);font-weight:700;font-size:14px}
+.step.on{background:var(--main);color:#fff}
+.step.lock{opacity:.5;cursor:not-allowed}
+.me{font-size:14px;color:var(--sub);white-space:nowrap}
+.me b{color:var(--ink)}
+
+main{padding:18px 22px 40px;max-width:1400px;margin:0 auto}
+.subtabs{display:flex;gap:8px;margin-bottom:14px}
+.subtab{padding:9px 18px;border-radius:12px;background:#fff;border:2px solid var(--line);font-weight:700;color:var(--sub);font-size:15px}
+.subtab.on{border-color:var(--main);color:var(--main2);background:#eaf5e6}
+.guide{background:#fff;border-left:6px solid var(--main);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:15px;line-height:1.6}
+
+/* ---------- 갤러리 ---------- */
+.chips{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.chip{padding:7px 14px;border-radius:999px;background:#fff;border:2px solid var(--line);font-weight:700;font-size:14px;color:var(--sub)}
+.chip.on{color:#fff;border-color:transparent}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.card{background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);cursor:pointer;transition:transform .15s;position:relative}
+.card:hover{transform:translateY(-3px)}
+.card .pic{aspect-ratio:4/3;width:100%;display:block;object-fit:cover;background:#eee}
+.card .body{padding:10px 12px 12px}
+.card h3{font-size:19px;margin-bottom:4px}
+.card p{font-size:13px;color:var(--sub);line-height:1.45}
+.tags{display:flex;gap:4px;margin-bottom:6px}
+.tag{font-size:11px;font-weight:700;color:#fff;padding:2px 8px;border-radius:999px}
+.real{margin-top:10px;background:#eef5ff;color:#2c5d8f;border-radius:10px;padding:8px 12px;font-size:14px;font-weight:700}
+.real.sm{margin-top:7px;padding:5px 8px;font-size:12px}
+/* 기후 난민 원인 칸 */
+.cause{background:#fff;border-radius:16px;padding:12px 14px;margin-bottom:12px;border-top:6px solid #8a6bd1}
+.cause h3{font-size:21px;margin-bottom:4px}
+.cause .hint{font-size:13px;color:var(--sub);margin-bottom:8px}
+.cause .write{display:flex;gap:8px;margin-bottom:10px}
+.cause .write input{flex:1}
+.cause .notes{display:flex;flex-wrap:wrap;gap:8px}
+.cause .note{background:#f1ebff;margin:0;min-width:180px;max-width:320px}
+.memo-done{position:absolute;top:8px;right:8px;background:#fff;border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700;color:var(--main2);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+
+/* ---------- 모달 ---------- */
+.modal-bg{position:fixed;inset:0;background:rgba(20,30,20,.5);display:flex;align-items:center;justify-content:center;z-index:50;padding:16px}
+.modal{background:#fff;border-radius:20px;width:min(960px,100%);max-height:94vh;overflow:auto;display:grid;grid-template-columns:1fr 1fr}
+.modal .left{padding:18px}
+.modal .left .pic{width:100%;border-radius:14px;aspect-ratio:4/3;object-fit:cover}
+.modal .left h2{font-size:28px;margin:10px 0 6px}
+.modal .left p{line-height:1.7;font-size:15px}
+.modal .q{margin-top:12px;background:#fff8e1;border-radius:10px;padding:10px 12px;font-weight:700;font-size:15px}
+.modal .right{padding:18px;background:#f7faf5;display:flex;flex-direction:column;gap:10px}
+.modal .right h3{font-size:22px;color:var(--main2)}
+.modal .right label{font-weight:700;font-size:14px}
+.modal .row{display:flex;gap:8px;margin-top:auto}
+.close-x{background:none;font-size:26px;color:var(--sub);float:right}
+
+/* ---------- 모둠 보드 ---------- */
+.board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.col{background:#fff;border-radius:16px;padding:10px;min-height:300px;border-top:6px solid}
+.col h3{font-size:20px;padding:4px 4px 8px;display:flex;justify-content:space-between;align-items:center}
+.col h3 small{font-family:'Noto Sans KR';font-size:12px;color:var(--sub)}
+.note{background:#fffbe0;border-radius:10px;padding:9px 10px;margin-bottom:8px;font-size:14px;line-height:1.5;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.note .from{font-size:11px;color:var(--sub);margin-bottom:3px}
+.note .k{font-weight:700;color:var(--main2)}
+.note .foot{display:flex;justify-content:space-between;align-items:center;margin-top:5px;font-size:12px;color:var(--sub)}
+.heart{background:#fff;border:1.5px solid #f0c3c3;border-radius:999px;padding:2px 9px;font-size:13px}
+.heart.on{background:#ffe1e1;border-color:#e88}
+.board-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px}
+
+/* ---------- 건물 목록 ---------- */
+.blist-wrap{display:grid;grid-template-columns:360px 1fr;gap:16px;align-items:start}
+.concept{margin-bottom:16px;border:3px solid #cfe9d6}
+.concept .cgrid{display:grid;grid-template-columns:1fr 1.4fr;gap:4px 14px}
+.concept .cview h2{font-family:'Jua';font-weight:400;font-size:26px;color:var(--main)}
+.concept .cview .theme{font-size:17px;font-weight:700;margin:4px 0 8px}
+.concept .cview p{white-space:pre-wrap;line-height:1.6;color:#444}
+.locked-panel{opacity:.55;pointer-events:none}
+.tvil{position:fixed;inset:0;z-index:45;background:#eef6f0;display:flex;flex-direction:column;padding:10px 12px;gap:8px}
+.tvil .thead{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tvil .vwrap{flex:1;height:auto;min-height:0;grid-template-columns:260px 1fr}
+.vconcept{background:#f0f9f2;border-radius:12px;padding:10px;margin-bottom:8px}
+.vconcept b{font-family:'Jua';font-weight:400;font-size:20px;color:var(--main);display:block}
+.vconcept .theme{font-weight:700;font-size:14px;margin:2px 0 4px}
+.vconcept p{font-size:13px;line-height:1.5;color:#555;white-space:pre-wrap}
+.dcard{border:2px solid var(--line);border-radius:14px;padding:12px;display:grid;grid-template-columns:120px 1fr;gap:12px;margin-bottom:10px;background:#fff}
+.dcard .thumb{background:repeating-conic-gradient(#eee 0 25%,#fff 0 50%) 0 0/16px 16px;border-radius:10px;display:flex;align-items:center;justify-content:center;min-height:110px;font-size:12px;color:#999}
+.dcard .thumb img{max-width:100%;max-height:140px}
+.dcard h4{font-size:18px;margin-bottom:4px}
+.dcard .dinfo{font-size:14px;line-height:1.6}
+.dcard .k{font-weight:700;color:var(--main)}
+.panel{background:#fff;border-radius:16px;padding:16px}
+.panel h3{font-size:21px;margin-bottom:10px}
+.panel label{font-weight:700;font-size:14px;display:block;margin:10px 0 5px}
+.catpick{display:flex;gap:6px;flex-wrap:wrap}
+.catpick button{padding:7px 11px;border-radius:10px;background:#f0f3ee;font-weight:700;font-size:13px;color:var(--sub);border:2px solid transparent}
+.check{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.check span{padding:8px 12px;border-radius:10px;font-weight:700;font-size:14px}
+.check .ok{background:#e3f4dc;color:var(--main2)}
+.check .no{background:#ffe9e0;color:#c0502a}
+.bitem{display:flex;gap:12px;align-items:center;padding:12px;border:2px solid var(--line);border-radius:14px;margin-bottom:8px}
+.bitem .num{font-family:'Jua';font-size:22px;color:var(--main);width:28px}
+.bitem .info{flex:1}
+.bitem .info b{font-size:17px}
+.bitem .info p{font-size:13px;color:var(--sub);margin-top:2px}
+.owner{font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px;background:#eef5ea;color:var(--main2);white-space:nowrap}
+
+/* ---------- 2단계 설계 ---------- */
+.design{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start}
+.design .panel label{margin:14px 0 6px}
+.design .panel label:first-of-type{margin-top:0}
+.feat{display:grid;grid-template-columns:28px 1fr 130px;gap:8px;align-items:center;margin-bottom:8px}
+.feat b{font-family:'Jua';font-size:20px;color:var(--main);text-align:center}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mats{display:flex;flex-wrap:wrap;gap:6px}
+.mats button{padding:7px 12px;border-radius:999px;background:#f0f3ee;font-weight:700;font-size:13px;color:var(--sub);border:2px solid transparent}
+.mats button.on{background:#e3f4dc;color:var(--main2);border-color:var(--main)}
+.prompt-box{position:sticky;top:76px}
+.prompt{white-space:pre-wrap;background:#f7faf5;border:2px dashed var(--main);border-radius:14px;padding:14px;font-size:14px;line-height:1.65;max-height:52vh;overflow:auto}
+.how{font-size:14px;line-height:1.8;margin-top:12px;background:#fffbe8;border-radius:12px;padding:10px 14px}
+.toggle{display:flex;gap:6px;margin-bottom:10px}
+.toggle button{flex:1;padding:9px;border-radius:10px;background:#f0f3ee;font-weight:700;font-size:14px;color:var(--sub);border:2px solid transparent}
+.toggle button.on{background:var(--main);color:#fff}
+.status{font-size:13px;font-weight:700;padding:4px 10px;border-radius:999px}
+.status.ok{background:#e3f4dc;color:var(--main2)}
+.status.no{background:#ffe9e0;color:#c0502a}
+/* ---------- 3단계 건물 ---------- */
+.checker{background:conic-gradient(#e9eee6 25%,#fff 0 50%,#e9eee6 0 75%,#fff 0) 0 0/24px 24px;border-radius:14px;border:2px solid var(--line);display:flex;justify-content:center;overflow:hidden}
+.checker canvas{max-width:100%;max-height:50vh;touch-action:none;cursor:crosshair;display:block}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+.tools .tg{padding:9px 14px;border-radius:10px;background:#f0f3ee;font-weight:700;font-size:14px;color:var(--sub)}
+.tools .tg.on{background:var(--main);color:#fff}
+.slide{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--sub);margin-top:8px}
+.slide input{flex:1;padding:0;border:none}
+.filebtn{display:block;text-align:center;margin-top:10px;cursor:pointer}
+.savedpic{margin-top:14px;text-align:center;background:#f7faf5;border-radius:14px;padding:12px}
+.savedpic img{max-width:200px;max-height:200px}
+.empty{padding:50px 10px;text-align:center;color:var(--sub);border:2px dashed var(--line);border-radius:14px}
+/* ---------- 4단계 마을 ---------- */
+.vwrap{display:grid;grid-template-columns:214px 1fr;gap:12px;height:calc(100vh - 168px);min-height:430px}
+.vside{background:#fff;border-radius:16px;padding:10px;overflow:auto}
+.vside h4{font-family:'Jua';font-weight:400;font-size:17px;margin:10px 2px 6px}
+.vside h4:first-child{margin-top:0}
+.vtools{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.vtools button{padding:8px 4px;border-radius:10px;background:#f0f3ee;font-weight:700;font-size:13px;color:var(--ink);border:2px solid transparent}
+.vtools button.on{border-color:var(--main);background:#e3f4dc}
+.vtray button{display:flex;align-items:center;gap:8px;width:100%;padding:6px;border-radius:10px;background:#f7faf5;margin-bottom:6px;text-align:left;font-size:13px;font-weight:700;color:var(--ink)}
+.vtray img{width:44px;height:44px;object-fit:contain}
+.vtray small{display:block;font-weight:400;color:var(--sub)}
+.vprops{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+.vprops button{background:#f7faf5;border-radius:8px;padding:4px;height:46px}
+.vprops img{width:100%;height:100%;object-fit:contain}
+.vport{position:relative;background:linear-gradient(180deg,#bfe3f5,#e6f5fb);border-radius:16px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.vworld{position:absolute;left:0;top:0;transform-origin:0 0}
+.vworld canvas{display:block}
+#vItems{position:absolute;inset:0}
+.vi{position:absolute;width:0;height:0}
+.vi img{position:absolute;bottom:-3px;max-width:none;-webkit-user-drag:none}
+.vi .sh{position:absolute;left:0;top:0;transform:translate(-50%,-50%);background:rgba(0,0,0,.2);border-radius:50%;pointer-events:none}
+.vi .lb{position:absolute;top:5px;left:0;transform:translateX(-50%);white-space:nowrap;background:rgba(255,255,255,.9);border-radius:999px;padding:1px 8px;font-size:12px;font-weight:700;pointer-events:none}
+.vi.sel img{filter:drop-shadow(0 0 3px #ff9800) drop-shadow(0 0 7px #ffd400)}
+.vzoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.vzoom button,.vbar button{width:44px;height:44px;border-radius:12px;background:#fff;font-size:20px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.18);color:var(--ink)}
+.vbar{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;gap:6px;background:rgba(255,255,255,.92);padding:8px;border-radius:16px;box-shadow:0 2px 10px rgba(0,0,0,.2);align-items:center}
+.vbar button{box-shadow:none;background:#eef2ec}
+.vbar .sep{width:1px;height:30px;background:#ccd}
+.vbar .nm{font-weight:700;font-size:13px;padding:0 6px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vmsg{position:absolute;left:10px;top:10px;background:rgba(255,255,255,.92);padding:6px 12px;border-radius:10px;font-size:13px;font-weight:700}
+/* ---------- 준비 중 ---------- */
+.soon{background:#fff;border-radius:20px;padding:50px;text-align:center}
+.soon .big{font-size:60px}
+.soon h2{font-size:30px;margin:10px 0}
+.soon p{color:var(--sub);line-height:1.7}
+
+/* ---------- 교사 ---------- */
+.t-grid{display:grid;grid-template-columns:300px 1fr;gap:16px;align-items:start}
+.stage-btns{display:grid;gap:8px}
+.stage-btns button{padding:12px;border-radius:12px;background:#f0f3ee;font-weight:700;text-align:left;font-size:15px;color:var(--ink)}
+.stage-btns button.on{background:var(--main);color:#fff}
+.gsel{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:11px 20px;border-radius:12px;z-index:99;font-size:15px}
+.mode-badge{font-size:12px;padding:3px 8px;border-radius:6px;background:#fff3cd;color:#8a6d00;font-weight:700}
+</style>
+</head>
+<body>
+
+<!-- ================= 입장 ================= -->
+<section id="login">
+  <div class="login-box">
+    <h1>🌱 그린 아크 마을</h1>
+    <p class="sub">기후 위기를 이겨내는 우리 모둠의 미래 마을 만들기</p>
+    <label>우리 모둠</label>
+    <div class="group-grid" id="groupGrid"></div>
+    <label>이름</label>
+    <input id="nameInput" placeholder="이름을 입력하세요" maxlength="10">
+    <button class="btn" style="width:100%;margin-top:16px;font-size:17px;padding:13px" onclick="App.enter()">입장하기</button>
+    <button class="teacher-link" onclick="App.teacherLogin()">선생님 화면</button>
+    <div style="margin-top:10px" id="modeInfo"></div>
+  </div>
+</section>
+
+<!-- ================= 학생 ================= -->
+<section id="studentApp" class="hidden">
+  <header>
+    <div class="logo">🌱 그린 아크</div>
+    <nav class="steps" id="steps"></nav>
+    <div class="me" id="meInfo"></div>
+  </header>
+  <main id="studentMain"></main>
+</section>
+
+<!-- ================= 교사 ================= -->
+<section id="teacherApp" class="hidden">
+  <header>
+    <div class="logo">🌱 그린 아크 · 선생님</div>
+    <div style="flex:1"></div>
+    <button class="btn ghost sm" onclick="location.reload()">나가기</button>
+  </header>
+  <main id="teacherMain"></main>
+</section>
+
+<div id="modalRoot"></div>
+
+<script type="module">
+/* =========================================================
+   1. 설정 — Firebase 설정값을 붙여넣으면 모든 기기가 공유됩니다.
+      비워 두면 '체험 모드'(이 기기 안에서만 저장)로 작동합니다.
+   ========================================================= */
+const FIREBASE_CONFIG = {
+  // apiKey: "...",
+  // authDomain: "...",
+  // projectId: "...",
+  // storageBucket: "...",
+  // messagingSenderId: "...",
+  // appId: "..."
+};
+const TEACHER_PW = "1234";   // 선생님 화면 비밀번호
+const UNLOCK_ALL = false;     // true로 바꾸면 모든 단계가 열린 확인용 화면이 됩니다
+const GROUP_COUNT = 6;        // 모둠 수
+const ROOT = "greenark";      // 저장 위치 이름(반이 여러 개면 바꿔서 사용)
+
+/* =========================================================
+   2. 단계 정의 (4차시)
+   ========================================================= */
+const STEPS = [
+  {n:1, icon:"🔍", name:"탐색"},
+  {n:2, icon:"✏️", name:"설계"},
+  {n:3, icon:"🏗️", name:"건물"},
+  {n:4, icon:"🏘️", name:"마을"},
+];
+
+/* =========================================================
+   3. 분류
+   ========================================================= */
+const CATS = {
+  home:  {name:"사는 곳",   icon:"🏠", color:"var(--home)",   hex:"#e07b4f"},
+  food:  {name:"먹을 것",   icon:"🌱", color:"var(--food)",   hex:"#4fa357"},
+  energy:{name:"에너지",    icon:"⚡", color:"var(--energy)", hex:"#e3a91b"},
+  water: {name:"물과 자원", icon:"💧", color:"var(--water)",  hex:"#3a8bd1"},
+};
+
+/* =========================================================
+   4. 사례 카드 — img에 사진 주소를 넣으면 일러스트 대신 사진이 나옵니다.
+      tags 첫 번째가 대표 분류입니다.
+   ========================================================= */
+const CARDS = [
+  // 사는 곳
+  {id:"h1", tags:["home","water"], title:"물 위에 지은 집 (수상 가옥)", emo:["🏠","🌊","🪵"], scene:"sea",
+   desc:"바다나 강 위에 긴 기둥을 박고 그 위에 지은 집이에요. 집이 물보다 높아서 물이 불어나도 잠기지 않고, 집들을 다리로 이어 마을을 이루어요.",
+   real:"브루나이 캄퐁 아예르 수상 마을, 캄보디아 톤레삽 호수 마을 등", q:"물이 많아지는 곳에서 살려면 집이 어떻게 달라져야 할까?", img:"img/h1.jpg"},
+  {id:"h2", tags:["home","water"], title:"수륙양용 주택", emo:["🏡","⬆️","🌧️"], scene:"flood",
+   desc:"평소에는 땅 위에 있다가, 강물이 불어나면 집이 기둥을 따라 둥실 떠올라요. 물이 빠지면 다시 제자리로 내려와요.",
+   real:"네덜란드 마스봄멜 마을 (2005년에 지었고, 2011년 홍수 때 실제로 떠올랐어요)", q:"홍수가 자주 나는 마을에 꼭 필요한 건물은 무엇일까?", img:"img/h2.jpg"},
+  {id:"h3", tags:["home","energy"], title:"흙벽과 바람탑 집", emo:["🏜️","🧱","🌬️"], scene:"desert",
+   desc:"두꺼운 흙벽이 뜨거운 햇볕을 막고, 지붕 위 높은 바람탑이 바람을 끌어들여 전기 없이도 집을 시원하게 해요.",
+   real:"이란 야즈드 (바람탑이 많아 세계유산으로 지정된 사막 도시)", q:"전기를 쓰지 않고 집을 시원하게 하는 방법은 또 뭐가 있을까?", img:"img/h3.jpg"},
+  {id:"h4", tags:["home"], title:"숲이 된 아파트", emo:["🏢","🌳","🐦"], scene:"city",
+   desc:"발코니마다 나무와 식물을 심은 아파트예요. 그늘을 만들어 집 안을 시원하게 하고, 먼지를 줄이고, 새와 곤충의 집이 돼요.",
+   real:"이탈리아 밀라노 '보스코 베르티칼레' (나무 약 900그루)", q:"건물에 식물이 많아지면 어떤 점이 좋아질까?", img:"img/h4.jpg"},
+  {id:"h5", tags:["home","energy"], title:"제로 에너지 하우스", emo:["🏠","☀️","🔋"], scene:"sunny",
+   desc:"열이 새지 않게 꼼꼼히 막아 에너지를 적게 쓰고, 태양광 같은 방법으로 필요한 에너지를 스스로 만드는 집이에요.",
+   real:"우리나라에도 '제로에너지건축물' 인증 제도가 있어요", q:"우리 집이 에너지를 만든다면 어떤 모습일까?", img:"img/h5.jpg"},
+  // 먹을 것
+  {id:"f1", tags:["food"], title:"수직 농장", emo:["🏢","🥬","💡"], scene:"city",
+   desc:"건물 안 선반에 층층이 채소를 기르고 햇빛 대신 LED 불빛을 비춰요. 좁은 땅에서도, 날씨가 나빠도 농사를 지을 수 있어요.",
+   real:"우리나라를 포함한 여러 나라 도시", q:"땅이 부족한 도시에서는 어떻게 먹을 것을 기를 수 있을까?", img:"img/f1.jpg"},
+  {id:"f2", tags:["food","water"], title:"아쿠아포닉스", emo:["🐟","🥬","🔄"], scene:"pond",
+   desc:"물고기 똥이 채소의 거름이 되고, 채소 뿌리는 물을 깨끗하게 해서 다시 물고기에게 돌려줘요.",
+   real:"여러 나라의 농장과 학교", q:"서로 도우며 함께 자라는 농업을 또 생각해 볼 수 있을까?", img:"img/f2.jpg"},
+  {id:"f3", tags:["food","water"], title:"물에 뜨는 텃밭", emo:["🌿","🌊","🥒"], scene:"sea",
+   desc:"물풀을 쌓아 뗏목처럼 띄운 밭이에요. 홍수로 땅이 오랫동안 잠겨도 물 위에서 채소를 기를 수 있어요.",
+   real:"방글라데시 남부 (유엔 식량농업기구가 세계중요농업유산으로 지정)", q:"땅이 물에 잠긴 곳에서는 어디에 농사를 지을까?", img:"img/f3.jpg"},
+  {id:"f4", tags:["food","water"], title:"방울방울 물주기 (점적 관개)", emo:["💧","🌱","🏜️"], scene:"desert",
+   desc:"가느다란 관으로 식물 뿌리에 물을 한 방울씩 줘요. 물을 아끼면서 농사지을 수 있어요.",
+   real:"이스라엘처럼 물이 부족한 나라에서 널리 사용", q:"물이 부족한 마을에서 농사를 지으려면 무엇이 필요할까?", img:"img/f4.jpg"},
+  {id:"f5", tags:["food"], title:"우렁이 농법", emo:["🐌","🌾","🚫"], scene:"field",
+   desc:"논에 우렁이를 풀어 두면 잡초를 먹어 치워요. 농약을 쓰지 않아 땅과 물이 깨끗해져요.",
+   real:"우리나라 친환경 논", q:"농약 없이 농사짓는 다른 방법은 무엇이 있을까?", img:"img/f5.jpg"},
+  // 에너지
+  {id:"e1", tags:["energy","home"], title:"태양광 지붕", emo:["☀️","🏠","⚡"], scene:"sunny",
+   desc:"지붕에 태양광판을 올려 햇빛으로 전기를 만들어요. 쓰고 남은 전기는 전깃줄을 통해 다른 곳으로 보낼 수 있어요.",
+   real:"우리나라 아파트·학교·공공건물 지붕", q:"햇빛을 가장 많이 받을 수 있는 곳은 마을의 어디일까?", img:"img/e1.jpg"},
+  {id:"e2", tags:["energy"], title:"바다 위 풍력 발전", emo:["🌬️","🌊","⚡"], scene:"sea",
+   desc:"바람이 센 바다 위에 커다란 바람개비(풍력 발전기)를 세워 전기를 만들어요.",
+   real:"우리나라 제주 바다, 영국·덴마크 바다 등", q:"우리 마을 주변에서 바람이 많이 부는 곳은 어디일까?", img:"img/e2.jpg"},
+  {id:"e3", tags:["energy","food"], title:"농사도 짓고 전기도 만드는 밭 (영농형 태양광)", emo:["☀️","🌾","⚡"], scene:"field",
+   desc:"논밭 위에 높이 태양광판을 설치해요. 아래에서는 벼나 채소를 기르고, 위에서는 전기를 만들어요.",
+   real:"우리나라 전라남도 등의 시범 단지, 일본 등", q:"한 곳에서 두 가지 일을 함께 하는 건물을 생각해 볼까?", img:"img/e3.jpg"},
+  {id:"e4", tags:["energy","water"], title:"똥과 음식물로 만드는 에너지 (바이오가스)", emo:["🐄","🍂","🔥"], scene:"field",
+   desc:"가축 똥과 음식물 쓰레기를 큰 통에 모아 두면 가스가 생겨요. 이 가스로 전기와 난방을 만들어요.",
+   real:"우리나라 축산 농가, 음식물 처리 시설 등", q:"버려지는 것 중에 에너지가 될 수 있는 것은 또 무엇일까?", img:"img/e4.jpg"},
+  {id:"e5", tags:["energy","home"], title:"땅속 온도로 냉난방 (지열)", emo:["🌍","🌡️","🏠"], scene:"field",
+   desc:"땅속 깊은 곳은 일 년 내내 온도가 비슷해요. 이 온도를 이용해 여름엔 시원하게, 겨울엔 따뜻하게 해요.",
+   real:"우리나라 공공건물, 학교 등", q:"자연에서 얻을 수 있는 에너지는 또 무엇이 있을까?", img:"img/e5.jpg"},
+  // 물과 자원
+  {id:"w1", tags:["water"], title:"빗물 저금통", emo:["🌧️","🛢️","🚿"], scene:"rain",
+   desc:"지붕에 떨어진 빗물을 큰 통에 모아 두었다가 화단이나 텃밭 물, 청소할 때 써요.",
+   real:"우리나라 여러 지역 (주택·학교에 설치)", q:"비가 올 때 모아 둔 물을 어디에 쓸 수 있을까?", img:"img/w1.jpg"},
+  {id:"w2", tags:["water","home"], title:"물을 담는 광장", emo:["⛲","🌧️","⚽"], scene:"rain",
+   desc:"평소에는 농구장과 놀이 공간이지만, 비가 많이 오면 웅덩이에 빗물을 담아 두어 동네가 물에 잠기지 않게 해요.",
+   real:"네덜란드 로테르담 '벤템 광장' (2013년, 큰 수영장만큼 물을 담아요)", q:"평소와 위기 때 다르게 쓰이는 공간을 만들어 볼까?", img:"img/w2.jpg"},
+  {id:"w3", tags:["water","food"], title:"음식물 퇴비", emo:["🍎","♻️","🌱"], scene:"field",
+   desc:"음식물 쓰레기와 낙엽을 모아 썩히면 좋은 거름(퇴비)이 돼요. 이 거름으로 다시 텃밭 채소를 길러요.",
+   real:"우리나라 학교·마을 텃밭 등", q:"마을의 쓰레기가 다시 쓰이려면 어떤 시설이 필요할까?", img:"img/w3.jpg"},
+];
+
+/* =========================================================
+   5. 기본 일러스트 (사진이 없을 때)
+   ========================================================= */
+const SCENES = {
+  sea:   ["#9fd8f5","#5aa9e0","#3b82c4"],
+  flood: ["#b8c7d6","#7ea6c9","#5b88b5"],
+  desert:["#ffe2a8","#f2c879","#d9a35a"],
+  city:  ["#c6e6f7","#a8d18f","#7fb46b"],
+  sunny: ["#ffe9a8","#b6e09a","#86c06e"],
+  pond:  ["#c9ecf5","#8fd0c0","#5fae9a"],
+  field: ["#d6efff","#b8de8c","#8cc163"],
+  rain:  ["#aebccb","#9cc7a8","#79ac86"],
+};
+function illu(c){
+  const s = SCENES[c.scene] || SCENES.field;
+  const [a,b,d] = c.emo;
+  return `data:image/svg+xml;charset=utf-8,`+encodeURIComponent(
+`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${s[0]}"/><stop offset="1" stop-color="#ffffff"/></linearGradient></defs>
+<rect width="400" height="300" fill="url(#g)"/>
+<circle cx="340" cy="60" r="28" fill="#fff6c9" opacity=".9"/>
+<path d="M0 210 Q100 180 200 205 T400 200 V300 H0Z" fill="${s[1]}"/>
+<path d="M0 245 Q120 225 220 245 T400 240 V300 H0Z" fill="${s[2]}"/>
+<text x="200" y="195" font-size="110" text-anchor="middle">${a}</text>
+<text x="80" y="240" font-size="58" text-anchor="middle">${b}</text>
+<text x="320" y="245" font-size="58" text-anchor="middle">${d}</text>
+</svg>`);
+}
+const picOf = c => c.img || illu(c);
+
+/* =========================================================
+   6. 저장소 (Firebase 또는 체험 모드)
+      - 모둠당 문서 1개: { notes:[...], buildings:[...] }
+      - 설정 문서 1개:   { stage: 1~4 }
+   ========================================================= */
+const useFirebase = !!FIREBASE_CONFIG.projectId;
+let DB;
+
+if (useFirebase){
+  const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js");
+  const fs = await import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js");
+  const app = initializeApp(FIREBASE_CONFIG);
+  const db = fs.getFirestore(app);
+  const ref = id => fs.doc(db, ROOT, id);
+  DB = {
+    watch(id, cb){ return fs.onSnapshot(ref(id), s => cb(s.exists()? s.data() : {})); },
+    async get(id){ const s = await fs.getDoc(ref(id)); return s.exists()? s.data() : {}; },
+    async update(id, fn){
+      await fs.runTransaction(db, async tx => {
+        const s = await tx.get(ref(id));
+        const data = s.exists()? s.data() : {};
+        fn(data);
+        tx.set(ref(id), data);
+      });
+    },
+  };
+} else {
+  // 체험 모드: 이 기기의 브라우저에만 저장 (같은 기기 여러 탭끼리는 공유)
+  const key = id => ROOT+"_"+id;
+  const subs = {};
+  const read = id => { try{ return JSON.parse(localStorage.getItem(key(id))||"{}"); }catch(e){ return {}; } };
+  const fire = id => (subs[id]||[]).forEach(cb => cb(read(id)));
+  window.addEventListener("storage", e => { Object.keys(subs).forEach(id => { if(e.key===key(id)) fire(id); }); });
+  DB = {
+    watch(id, cb){ (subs[id] ||= []).push(cb); cb(read(id)); return ()=>{ subs[id]=subs[id].filter(f=>f!==cb); }; },
+    async get(id){ return read(id); },
+    async update(id, fn){ const d = read(id); fn(d); try{ localStorage.setItem(key(id), JSON.stringify(d)); }catch(e){} fire(id); },
+  };
+}
+
+/* =========================================================
+   7. 공용 도구
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s??"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+function toast(msg){ document.querySelectorAll(".toast").forEach(x=>x.remove()); const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),1800); }
+// 화면 안 대화상자 (브라우저 기본 창 대신)
+function dialog(msg, withInput){
+  return new Promise(res => {
+    const bg = document.createElement("div"); bg.className = "modal-bg";
+    bg.innerHTML = `<div class="panel" style="width:min(380px,100%);text-align:center">
+      <p style="font-size:17px;font-weight:700;margin:6px 0 14px">${esc(msg)}</p>
+      ${withInput?`<input type="password" id="dlgIn" style="margin-bottom:12px">`:""}
+      <div style="display:flex;gap:8px"><button class="btn ghost" style="flex:1" data-a="0">취소</button><button class="btn" style="flex:1" data-a="1">확인</button></div></div>`;
+    document.body.appendChild(bg);
+    const inp = bg.querySelector("#dlgIn"); if(inp){ inp.focus(); inp.onkeydown = e => { if(e.key==="Enter") bg.querySelector('[data-a="1"]').click(); }; }
+    bg.onclick = e => { const a = e.target.dataset?.a; if(a===undefined) return; bg.remove(); res(withInput ? (a==="1" ? inp.value : null) : a==="1"); };
+  });
+}
+const ask = msg => dialog(msg, false);
+const tagHTML = tags => `<div class="tags">${tags.map(t=>`<span class="tag" style="background:${CATS[t].color}">${CATS[t].icon} ${CATS[t].name}</span>`).join("")}</div>`;
+// 개인 메모는 각자 기기에 저장 (서버 사용 안 함)
+const memoKey = () => `${ROOT}_memo_${S.group}_${S.name}`;
+function loadMemos(){ try{ return JSON.parse(localStorage.getItem(memoKey())||"{}"); }catch(e){ return {}; } }
+function saveMemos(m){ try{ localStorage.setItem(memoKey(), JSON.stringify(m)); }catch(e){} }
+
+/* =========================================================
+   8. 학생 앱
+   ========================================================= */
+const S = { group:null, name:"", stage:1, view:1, sub:"gallery", filter:"all", gdata:{notes:[],buildings:[],designs:{},imgs:{},concept:null}, vdata:{items:{},ground:{},likes:{}}, lock:false, ready:false };
+
+const App = {
+  init(){
+    $("#groupGrid").innerHTML = Array.from({length:GROUP_COUNT},(_,i)=>`<button data-g="${i+1}">${i+1}모둠</button>`).join("");
+    $("#groupGrid").onclick = e => {
+      const b = e.target.closest("button"); if(!b) return;
+      S.group = +b.dataset.g;
+      document.querySelectorAll("#groupGrid button").forEach(x=>x.classList.toggle("on", x===b));
+    };
+    $("#modeInfo").innerHTML = useFirebase ? "" : `<span class="mode-badge">체험 모드 · 이 기기에만 저장돼요</span>`;
+    try{
+      const last = JSON.parse(localStorage.getItem(ROOT+"_me")||"null");
+      if(last){ $("#nameInput").value = last.name; const b=document.querySelector(`#groupGrid button[data-g="${last.group}"]`); if(b) b.click(); }
+    }catch(e){}
+  },
+
+  enter(){
+    const name = $("#nameInput").value.trim();
+    if(!S.group) return toast("모둠을 골라 주세요");
+    if(!name) return toast("이름을 입력해 주세요");
+    S.name = name;
+    try{ localStorage.setItem(ROOT+"_me", JSON.stringify({group:S.group,name})); }catch(e){}
+    $("#login").classList.add("hidden");
+    $("#studentApp").classList.remove("hidden");
+    $("#meInfo").innerHTML = `<b>${S.group}모둠</b> · ${esc(name)}`;
+    // 실시간으로 받는 것은 '설정 1개 + 우리 모둠 1개' 뿐
+    DB.watch("settings", d => {
+      const pv = S.view, first = !S.ready; S.ready = true;
+      S.stage = UNLOCK_ALL ? 4 : (d.stage || 1); S.lock = !!d.lock;
+      if(S.view > S.stage) S.view = S.stage;
+      renderSteps();
+      if(first || pv!==S.view) render(); else V.refresh();   // 작업 중인 화면은 다시 그리지 않아요
+    });
+    DB.watch("v"+S.group, d => { S.vdata = {items:d.items||{}, ground:d.ground||{}, likes:d.likes||{}}; V.refresh(); });
+    DB.watch("g"+S.group, d => { S.gdata = {notes:d.notes||[], buildings:d.buildings||[], designs:d.designs||{}, imgs:d.imgs||{}, concept:d.concept||null};
+      if(S.view===1 && S.sub!=="gallery") render();
+      if(S.view===4 && V.mode===0){ V.refresh(); ensureImgs(S.group, S.gdata.imgs).then(ch => { if(ch) V.refresh(); }); }
+    });
+  },
+
+  go(n){ if(n > S.stage) return toast("아직 열리지 않은 단계예요"); V.flush(); S.view = n; renderSteps(); render(); },
+  sub(s){ S.sub = s; render(); },
+  filter(f){ S.filter = f; render(); },
+
+  /* ----- 카드 모달 ----- */
+  openCard(id){
+    const c = CARDS.find(x=>x.id===id);
+    const m = loadMemos()[id] || {};
+    $("#modalRoot").innerHTML = `
+    <div class="modal-bg" onclick="if(event.target===this)App.closeModal()">
+      <div class="modal">
+        <div class="left">
+          <img class="pic" src="${picOf(c)}" alt="">
+          <h2>${esc(c.title)}</h2>
+          ${tagHTML(c.tags)}
+          <p>${esc(c.desc)}</p>
+          <div class="real">📍 실제 사례: ${esc(c.real)}</div>
+          <div class="q">🤔 ${esc(c.q)}</div>
+        </div>
+        <div class="right">
+          <div><button class="close-x" onclick="App.closeModal()">✕</button><h3>📝 나의 생각</h3></div>
+          <label>이 사례는 어떤 문제를 해결할까?</label>
+          <textarea id="mProblem" placeholder="예) 홍수가 나도 집이 잠기지 않게 해 줘요">${esc(m.problem||"")}</textarea>
+          <label>우리 마을에 쓴다면?</label>
+          <textarea id="mUse" placeholder="예) 강가에 있는 집을 이렇게 바꾸면 좋겠어요">${esc(m.use||"")}</textarea>
+          <div class="row">
+            <button class="btn ghost" onclick="App.saveMemo('${id}')">내 메모 저장</button>
+            <button class="btn" onclick="App.sendNote('${id}')">모둠 보드로 보내기 ➜</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+  closeModal(){ $("#modalRoot").innerHTML = ""; if(S.view===1 && S.sub==="gallery") render(); },
+  saveMemo(id, silent){
+    const memos = loadMemos();
+    memos[id] = { problem: $("#mProblem").value.trim(), use: $("#mUse").value.trim() };
+    saveMemos(memos);
+    if(!silent) toast("메모를 저장했어요");
+    return memos[id];
+  },
+  async sendNote(id){
+    const m = App.saveMemo(id, true);
+    if(!m.problem && !m.use) return toast("생각을 먼저 적어 주세요");
+    const c = CARDS.find(x=>x.id===id);
+    const note = { id:uid(), by:S.name, cardId:id, cardTitle:c.title, cat:c.tags[0], problem:m.problem, use:m.use, hearts:[], t:Date.now() };
+    await DB.update("g"+S.group, d => { (d.notes ||= []).push(note); });
+    toast("모둠 보드로 보냈어요 ✨");
+    App.closeModal();
+  },
+
+  /* ----- 자유 아이디어 ----- */
+  openFree(){
+    $("#modalRoot").innerHTML = `
+    <div class="modal-bg" onclick="if(event.target===this)App.closeModal()">
+      <div class="modal" style="grid-template-columns:1fr;width:min(520px,100%)">
+        <div class="right" style="background:#fff">
+          <div><button class="close-x" onclick="App.closeModal()">✕</button><h3>💡 새 아이디어 쓰기</h3></div>
+          <label>어느 칸에 붙일까요?</label>
+          <select id="fCat">${Object.entries(CATS).map(([k,v])=>`<option value="${k}">${v.icon} ${v.name}</option>`).join("")}</select>
+          <label>아이디어</label>
+          <textarea id="fText" placeholder="예) 태양광 지붕 아래에서 채소를 기르는 학교"></textarea>
+          <div class="row"><button class="btn" style="width:100%" onclick="App.sendFree()">보드에 붙이기</button></div>
+        </div>
+      </div>
+    </div>`;
+  },
+  async sendFree(){
+    const text = $("#fText").value.trim(); if(!text) return toast("아이디어를 적어 주세요");
+    const note = { id:uid(), by:S.name, cardId:"", cardTitle:"", cat:$("#fCat").value, idea:text, hearts:[], t:Date.now() };
+    await DB.update("g"+S.group, d => { (d.notes ||= []).push(note); });
+    toast("보드에 붙였어요"); App.closeModal(); render();
+  },
+
+  async sendCause(){
+    const el = $("#causeInput"); const text = el.value.trim();
+    if(!text) return toast("이유를 적어 주세요");
+    el.value = "";
+    const note = { id:uid(), by:S.name, cardId:"", cardTitle:"", cat:"cause", idea:text, hearts:[], t:Date.now() };
+    await DB.update("g"+S.group, d => { (d.notes ||= []).push(note); });
+    toast("붙였어요");
+  },
+
+  async heart(noteId){
+    await DB.update("g"+S.group, d => {
+      const n = (d.notes||[]).find(x=>x.id===noteId); if(!n) return;
+      n.hearts ||= [];
+      n.hearts = n.hearts.includes(S.name) ? n.hearts.filter(x=>x!==S.name) : [...n.hearts, S.name];
+    });
+  },
+  async delMyNote(noteId){
+    if(!await ask("내 포스트잇을 지울까요?")) return;
+    await DB.update("g"+S.group, d => { d.notes = (d.notes||[]).filter(x=>!(x.id===noteId && x.by===S.name)); });
+  },
+
+  /* ----- 마을 컨셉 ----- */
+  editConcept(on){ D1.editConcept = on; render(); },
+  async saveConcept(){
+    const v = id => ($("#"+id)?.value || "").trim();
+    const c = { name:v("cName"), theme:v("cTheme"), desc:v("cDesc"), by:S.name };
+    if(!c.name) return toast("마을 이름을 적어 주세요");
+    if(!c.theme) return toast("마을 컨셉을 한 줄로 적어 주세요");
+    if(!c.desc) return toast("마을 설명을 적어 주세요");
+    ["cName","cTheme","cDesc"].forEach(id => { const el = $("#"+id); if(el) el.value = ""; });
+    D1.editConcept = false;
+    await DB.update("g"+S.group, d => { d.concept = c; });
+    toast("마을 컨셉을 저장했어요 🌱");
+  },
+
+  /* ----- 건물 목록 ----- */
+  pickCat(btn){
+    btn.classList.toggle("on");
+    const k = btn.dataset.k;
+    btn.style.background = btn.classList.contains("on") ? CATS[k].hex : "";
+    btn.style.color = btn.classList.contains("on") ? "#fff" : "";
+  },
+  async addBuilding(){
+    const name = $("#bName").value.trim();
+    const desc = $("#bDesc").value.trim();
+    const owner = $("#bOwner").value.trim();
+    const cats = [...document.querySelectorAll(".catpick button.on")].map(b=>b.dataset.k);
+    if(!S.gdata.concept) return toast("먼저 마을 컨셉을 저장해 주세요");
+    if(!name) return toast("건물 이름을 적어 주세요");
+    if(!cats.length) return toast("분류를 하나 이상 골라 주세요");
+    ["bName","bDesc","bOwner"].forEach(id => $("#"+id).value = "");
+    document.querySelectorAll(".catpick button.on").forEach(b => App.pickCat(b));
+    await DB.update("g"+S.group, d => { (d.buildings ||= []).push({ id:uid(), name, desc, owner, cats, by:S.name }); });
+    toast("목록에 추가했어요");
+  },
+  async claim(bid){
+    await DB.update("g"+S.group, d => { const b=(d.buildings||[]).find(x=>x.id===bid); if(b) b.owner = (b.owner===S.name? "" : S.name); });
+  },
+  async delBuilding(bid){
+    if(!await ask("이 건물을 목록에서 지울까요?")) return;
+    await DB.update("g"+S.group, d => { d.buildings = (d.buildings||[]).filter(x=>x.id!==bid); });
+  },
+
+  /* ----- 2단계 ----- */
+  updPrompt(){
+    const box = document.getElementById("dPrompt"); if(!box) return;
+    const d = readDesign();
+    box.textContent = buildPrompt(d, D2.withSketch);
+    const miss = missingOf(d), st = document.getElementById("dStatus");
+    st.className = "status " + (miss.length?"no":"ok");
+    st.textContent = miss.length ? `아직: ${miss.join(", ")}` : "✅ 완성!";
+  },
+  sketchMode(on){
+    const d = readDesign();
+    D2.withSketch = on;
+    S.gdata.designs[S.name] = { ...(S.gdata.designs[S.name]||{}), ...d };  // 화면 다시 그릴 때 입력 유지
+    render();
+  },
+  async saveDesign(){
+    const d = readDesign();
+    if(!d.name) return toast("건물 이름을 적어 주세요");
+    d.t = Date.now();
+    await DB.update("g"+S.group, g => { (g.designs ||= {})[S.name] = d; });
+    const miss = missingOf(d);
+    toast(miss.length ? `저장했어요 (아직: ${miss.join(", ")})` : "설계 카드를 저장했어요 ✅");
+  },
+  async copyPrompt(){
+    const text = document.getElementById("dPrompt").textContent;
+    try{ await navigator.clipboard.writeText(text); }
+    catch(e){
+      const ta = document.createElement("textarea"); ta.value = text; document.body.appendChild(ta);
+      ta.select(); try{ document.execCommand("copy"); }catch(_){} ta.remove();
+    }
+    toast("주문서를 복사했어요 📋");
+  },
+
+  /* ----- 교사 ----- */
+  async teacherLogin(){
+    const pw = await dialog("선생님 비밀번호", true);
+    if(pw !== TEACHER_PW) { if(pw!==null) toast("비밀번호가 달라요"); return; }
+    $("#login").classList.add("hidden");
+    $("#teacherApp").classList.remove("hidden");
+    T.init();
+  },
+};
+window.App = App;
+
+function renderSteps(){
+  $("#steps").innerHTML = STEPS.map(s => {
+    const cls = s.n===S.view ? "on" : (s.n > S.stage ? "lock" : "");
+    return `<button class="step ${cls}" onclick="App.go(${s.n})">${s.n > S.stage ? "🔒" : s.icon} ${s.n}. ${s.name}</button>`;
+  }).join("");
+}
+
+function render(){
+  const m = $("#studentMain");
+  // 다른 모둠원의 변경으로 화면이 다시 그려져도 입력 중인 내용은 유지
+  const keep = {};
+  ["bName","bDesc","bOwner","causeInput","cName","cTheme","cDesc"].forEach(id => { const el = document.getElementById(id); if(el) keep[id] = el.value; });
+  const picked = [...document.querySelectorAll(".catpick button.on")].map(b=>b.dataset.k);
+  const focusId = document.activeElement?.id;
+  try{ return renderInner(m); } finally {
+    Object.entries(keep).forEach(([id,v]) => { const el = document.getElementById(id); if(el) el.value = v; });
+    picked.forEach(k => { const b = document.querySelector(`.catpick button[data-k="${k}"]`); if(b) App.pickCat(b); });
+    if(focusId){ const el = document.getElementById(focusId); if(el) el.focus(); }
+  }
+}
+function renderInner(m){
+  if(S.view===1) m.innerHTML = renderStep1();
+  else if(S.view===2){ m.innerHTML = renderStep2(); App.updPrompt(); }
+  else if(S.view===3){ m.innerHTML = renderStep3(); B.mount(); }
+  else { m.innerHTML = V.html(); V.mount(); }
+}
+
+/* ---------- 1단계: 탐색 ---------- */
+function renderStep1(){
+  const tabs = `
+  <div class="subtabs">
+    <button class="subtab ${S.sub==="gallery"?"on":""}" onclick="App.sub('gallery')">🖼️ 사례 갤러리</button>
+    <button class="subtab ${S.sub==="board"?"on":""}" onclick="App.sub('board')">🗒️ 우리 모둠 보드 (${S.gdata.notes.length})</button>
+    <button class="subtab ${S.sub==="list"?"on":""}" onclick="App.sub('list')">🏘️ 우리 마을 설계 (${S.gdata.buildings.length})</button>
+  </div>`;
+  if(S.sub==="gallery") return tabs + renderGallery();
+  if(S.sub==="board")   return tabs + renderBoard();
+  return tabs + renderList();
+}
+
+function renderGallery(){
+  const memos = loadMemos();
+  const list = S.filter==="all" ? CARDS : CARDS.filter(c=>c.tags.includes(S.filter));
+  const chip = (k,label,color) => `<button class="chip ${S.filter===k?"on":""}" style="${S.filter===k?`background:${color}`:""}" onclick="App.filter('${k}')">${label}</button>`;
+  return `
+  <div class="guide">🔍 <b>기후가 바뀌어 지금처럼 살 수 없게 된다면, 우리 마을에는 무엇이 있어야 할까?</b><br>
+  카드를 눌러 살펴보고, 떠오른 생각을 적어 <b>모둠 보드로 보내 보세요.</b></div>
+  <div class="chips">
+    ${chip("all","전체 보기","var(--main)")}
+    ${Object.entries(CATS).map(([k,v])=>chip(k,`${v.icon} ${v.name}`,v.color)).join("")}
+  </div>
+  <div class="cards">
+    ${list.map(c=>`
+      <div class="card" onclick="App.openCard('${c.id}')">
+        ${memos[c.id] && (memos[c.id].problem||memos[c.id].use) ? `<span class="memo-done">📝 메모함</span>`:""}
+        <img class="pic" src="${picOf(c)}" alt="">
+        <div class="body">${tagHTML(c.tags)}<h3>${esc(c.title)}</h3><p>${esc(c.desc)}</p><div class="real sm">📍 ${esc(c.real)}</div></div>
+      </div>`).join("")}
+  </div>`;
+}
+
+const byHeart = (a,b)=>(b.hearts?.length||0)-(a.hearts?.length||0);
+function noteHTML(n){
+  return `
+  <div class="note">
+    <div class="from">${esc(n.by)}${n.cat==="cause"?"":(n.cardTitle?` · 📌 ${esc(n.cardTitle)}`:" · 💡 새 아이디어")}</div>
+    ${n.idea ? esc(n.idea) : ""}
+    ${n.problem ? `<div><span class="k">해결:</span> ${esc(n.problem)}</div>`:""}
+    ${n.use ? `<div><span class="k">우리 마을:</span> ${esc(n.use)}</div>`:""}
+    <div class="foot">
+      <button class="heart ${n.hearts?.includes(S.name)?"on":""}" onclick="App.heart('${n.id}')">❤️ ${n.hearts?.length||0}</button>
+      ${n.by===S.name?`<button style="background:none;color:var(--sub);font-size:12px" onclick="App.delMyNote('${n.id}')">지우기</button>`:""}
+    </div>
+  </div>`;
+}
+function renderBoard(){
+  const notes = S.gdata.notes;
+  const causes = notes.filter(n=>n.cat==="cause").sort(byHeart);
+  const col = (k) => {
+    const v = CATS[k];
+    const items = notes.filter(n=>n.cat===k).sort(byHeart);
+    return `
+    <div class="col" style="border-color:${v.color}">
+      <h3>${v.icon} ${v.name} <small>${items.length}장</small></h3>
+      ${items.map(noteHTML).join("") || `<p style="color:var(--sub);font-size:13px;padding:6px">아직 없어요</p>`}
+    </div>`;
+  };
+  return `
+  <div class="cause">
+    <h3>🌍 기후 난민은 왜 생길까? <small style="font-family:'Noto Sans KR';font-size:12px;color:var(--sub)">${causes.length}장</small></h3>
+    <div class="hint">기후가 바뀌면서 사람들이 살던 곳을 떠나야 하는 이유를 생각해 적어 보세요. (힌트: 바다, 비, 가뭄, 더위, 농사, 물…)</div>
+    <div class="write">
+      <input id="causeInput" maxlength="80" placeholder="예) 바닷물이 높아져서 섬이 물에 잠기기 때문에" onkeydown="if(event.key==='Enter')App.sendCause()">
+      <button class="btn" onclick="App.sendCause()">붙이기</button>
+    </div>
+    <div class="notes">${causes.map(noteHTML).join("") || `<p style="color:var(--sub);font-size:13px">아직 없어요</p>`}</div>
+  </div>
+  <div class="board-top">
+    <div class="guide" style="margin:0;flex:1">🗣️ 그렇다면 어떻게 해결할 수 있을까요? 모둠원의 생각을 읽고 <b>좋은 아이디어에 ❤️</b>를 눌러 주세요. 이야기를 나눈 뒤 활동지에 정리해 보세요.</div>
+    <button class="btn" onclick="App.openFree()">💡 새 아이디어 쓰기</button>
+  </div>
+  <div class="board">${Object.keys(CATS).map(col).join("")}</div>`;
+}
+
+const D1 = { editConcept:false };   // 화면 상태(저장 안 함)
+function renderConcept(){
+  const c = S.gdata.concept;
+  if(c && !D1.editConcept) return `
+  <div class="panel concept">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+      <h3 style="margin:0">🌱 1. 우리 마을 컨셉</h3>
+      <button class="btn sm ghost" onclick="App.editConcept(true)">✏️ 고치기</button>
+    </div>
+    <div class="cview" style="margin-top:8px">
+      <h2>${esc(c.name)}</h2>
+      <div class="theme">💡 ${esc(c.theme)}</div>
+      <p>${esc(c.desc)}</p>
+      <div style="font-size:12px;color:var(--sub);margin-top:6px">마지막으로 적은 사람: ${esc(c.by||"")}</div>
+    </div>
+  </div>`;
+  const v = c || {};
+  return `
+  <div class="panel concept">
+    <h3>🌱 1. 우리 마을 컨셉 정하기</h3>
+    <p style="font-size:14px;color:var(--sub)">건물을 정하기 전에, 모둠이 함께 <b>어떤 마을</b>을 만들지 먼저 정해요. 모둠에서 한 사람이 대표로 적어요.</p>
+    <div class="cgrid">
+      <div>
+        <label>마을 이름</label>
+        <input id="cName" maxlength="20" placeholder="예) 둥실둥실 물방울 마을" value="${esc(v.name||"")}">
+        <label>마을 컨셉 (한 줄)</label>
+        <input id="cTheme" maxlength="40" placeholder="예) 홍수가 나도 물 위에서 안전하게 사는 마을" value="${esc(v.theme||"")}">
+      </div>
+      <div>
+        <label>마을 설명 (어떤 기후 문제를 이겨 내는 마을인가요? 사람들은 어떻게 살아가나요?)</label>
+        <textarea id="cDesc" maxlength="300" style="min-height:104px" placeholder="예) 바닷물이 높아져 살 곳을 잃은 사람들이 모여 사는 마을이에요. 집은 물 위에 뜨고, 먹을 것은 물 위 텃밭에서 기르고, 전기는 해와 바람으로 만들어요.">${esc(v.desc||"")}</textarea>
+      </div>
+    </div>
+    <div class="row" style="margin-top:12px;gap:8px">
+      ${c?`<button class="btn ghost" onclick="App.editConcept(false)">취소</button>`:""}
+      <button class="btn" style="flex:1" onclick="App.saveConcept()">마을 컨셉 저장</button>
+    </div>
+  </div>`;
+}
+function renderList(){
+  const bs = S.gdata.buildings;
+  const has = k => bs.some(b=>b.cats.includes(k));
+  const ok = !!S.gdata.concept;
+  return `
+  <div class="guide">🏘️ 활동지에 정리한 내용을 바탕으로 먼저 <b>우리 마을의 컨셉</b>을 정하고, 그 마을에 꼭 필요한 <b>건물</b>을 적어요. 그다음 <b>내가 디자인할 건물</b>을 하나 골라 [내가 맡기]를 누르세요.</div>
+  ${renderConcept()}
+  <div class="blist-wrap">
+    <div class="panel">
+      <h3>➕ 2. 건물 추가</h3>
+      ${ok?"":`<p style="background:#fff4d6;border-radius:10px;padding:8px 10px;font-size:14px;margin-bottom:6px">🔒 위에서 마을 컨셉을 먼저 저장하면 건물을 추가할 수 있어요.</p>`}
+      <div class="${ok?"":"locked-panel"}">
+      <label>건물 이름</label>
+      <input id="bName" placeholder="예) 햇빛 채소 학교" maxlength="20">
+      <label>어떤 건물인가요? (여러 개 선택 가능)</label>
+      <div class="catpick">${Object.entries(CATS).map(([k,v])=>`<button data-k="${k}" onclick="App.pickCat(this)">${v.icon} ${v.name}</button>`).join("")}</div>
+      <label>하는 일 (한 줄)</label>
+      <input id="bDesc" placeholder="예) 지붕은 태양광, 안에서는 채소를 길러요" maxlength="50">
+      <label>맡을 사람 (나중에 정해도 돼요)</label>
+      <input id="bOwner" placeholder="이름" maxlength="10">
+      <button class="btn" style="width:100%;margin-top:14px" onclick="App.addBuilding()">목록에 추가</button>
+      </div>
+    </div>
+    <div class="panel">
+      <h3>📋 3. 우리 마을 건물 목록</h3>
+      <div class="check">
+        <span class="${bs.length>=6?"ok":"no"}">${bs.length>=6?"✅":"⬜"} 건물 ${bs.length}개 (6~8개 목표)</span>
+        <span class="${has("food")?"ok":"no"}">${has("food")?"✅":"⚠️"} 먹을 것(농업) 건물 ${has("food")?"있음":"아직 없어요"}</span>
+        <span class="${has("energy")?"ok":"no"}">${has("energy")?"✅":"⚠️"} 에너지 건물 ${has("energy")?"있음":"아직 없어요"}</span>
+      </div>
+      ${bs.map((b,i)=>`
+        <div class="bitem">
+          <div class="num">${i+1}</div>
+          <div class="info">
+            <b>${esc(b.name)}</b> ${b.cats.map(k=>CATS[k].icon).join("")}
+            <p>${esc(b.desc||"")}</p>
+          </div>
+          ${b.owner?`<span class="owner">👤 ${esc(b.owner)}</span>`:""}
+          <button class="btn sm ${b.owner===S.name?"":"ghost"}" onclick="App.claim('${b.id}')">${b.owner===S.name?"맡기 취소":"내가 맡기"}</button>
+          <button class="btn sm ghost" style="border-color:#ccc;color:#999" onclick="App.delBuilding('${b.id}')">✕</button>
+        </div>`).join("") || `<p style="color:var(--sub)">아직 건물이 없어요. 왼쪽에서 추가해 보세요.</p>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- 2단계: 설계 ---------- */
+const ROOFS = ["평평한 지붕(옥상)","뾰족한 지붕","둥근 지붕","계단처럼 층층이","비스듬한 지붕"];
+const MATS  = ["나무","유리","흙·벽돌","돌","콘크리트","재활용 재료","식물로 덮인 벽","태양광판"];
+const FLOORS= ["1층","2층","3층","4~5층","6~10층","10층보다 높게"];
+let D2 = { withSketch:true };   // 화면 상태(저장 안 함)
+
+function renderStep2(){
+  const mine = S.gdata.buildings.find(b=>b.owner===S.name);
+  const d = S.gdata.designs[S.name] || {};
+  const name = d.name ?? (mine?.name || "");
+  const causes = S.gdata.notes.filter(n=>n.cat==="cause");
+  const f = d.feats || [{},{},{}];
+  const mats = d.mats || [];
+  const opt = (arr, v) => arr.map(x=>`<option ${x===v?"selected":""}>${esc(x)}</option>`).join("");
+  const catOpt = v => Object.entries(CATS).map(([k,c])=>`<option value="${k}" ${k===v?"selected":""}>${c.icon} ${c.name}</option>`).join("");
+  return `
+  <div class="guide">✏️ <b>내가 맡은 건물의 설계 정보</b>를 적어요. 다 적으면 오른쪽에 <b>AI에게 보낼 주문서(프롬프트)</b>가 자동으로 완성돼요.
+  ${mine?"":`<br>⚠️ 1단계 건물 목록에서 아직 맡은 건물이 없어요. 건물 이름을 직접 적어도 돼요.`}</div>
+  <div class="design">
+    <div class="panel" oninput="App.updPrompt()" onchange="App.updPrompt()">
+      <h3>📐 건물 설계 카드</h3>
+      <label>① 건물 이름</label>
+      <input id="dName" maxlength="20" value="${esc(name)}" placeholder="예) 햇빛 채소 학교">
+
+      <label>② 이 건물이 해결하는 문제</label>
+      ${causes.length?`<select id="dCauseSel" onchange="if(this.value){document.getElementById('dCause').value=this.value}"><option value="">— 우리 모둠 보드의 '기후 난민 원인'에서 고르기 —</option>${causes.map(c=>`<option value="${esc(c.idea)}">${esc(c.idea)}</option>`).join("")}</select><div style="height:6px"></div>`:""}
+      <input id="dCause" maxlength="60" value="${esc(d.cause||"")}" placeholder="예) 가뭄으로 농사를 짓기 어려워요">
+
+      <label>③ 친환경 기능 3가지</label>
+      ${[0,1,2].map(i=>`
+        <div class="feat"><b>${i+1}</b>
+          <input id="dF${i}" maxlength="40" value="${esc(f[i]?.text||"")}" placeholder="${["예) 지붕의 태양광판으로 전기를 만들어요","예) 건물 안 선반에서 채소를 길러요","예) 빗물을 모아 채소에게 줘요"][i]}">
+          <select id="dFc${i}">${catOpt(f[i]?.cat || ["energy","food","water"][i])}</select>
+        </div>`).join("")}
+
+      <label>④ 생김새</label>
+      <div class="dinfo">
+        <div><div style="font-size:13px;color:var(--sub);margin-bottom:4px">높이</div><select id="dFloor">${opt(FLOORS, d.floor||"2층")}</select></div>
+        <div><div style="font-size:13px;color:var(--sub);margin-bottom:4px">지붕 모양</div><select id="dRoof">${opt(ROOFS, d.roof||ROOFS[0])}</select></div>
+      </div>
+      <div style="font-size:13px;color:var(--sub);margin:10px 0 4px">주요 색깔</div>
+      <input id="dColor" maxlength="30" value="${esc(d.color||"")}" placeholder="예) 하얀 벽과 초록색 지붕">
+      <div style="font-size:13px;color:var(--sub);margin:10px 0 4px">재료 (여러 개 선택)</div>
+      <div class="mats" id="dMats">${MATS.map(m=>`<button class="${mats.includes(m)?"on":""}" onclick="this.classList.toggle('on');App.updPrompt()">${m}</button>`).join("")}</div>
+
+      <label>⑤ 꼭 지켜야 할 것 (AI가 반드시 그려야 할 부분)</label>
+      <textarea id="dMust" maxlength="100" placeholder="예) 건물 옆에 물고기 수조가 꼭 있어야 해요">${esc(d.must||"")}</textarea>
+
+      <button class="btn" style="width:100%;margin-top:16px;font-size:16px" onclick="App.saveDesign()">💾 설계 카드 저장</button>
+    </div>
+
+    <div class="panel prompt-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <h3 style="margin:0">🤖 AI 주문서</h3><span id="dStatus" class="status no"></span>
+      </div>
+      <div class="toggle">
+        <button class="${D2.withSketch?"on":""}" onclick="App.sketchMode(true)">✏️ 스케치 그림도 함께 넣기</button>
+        <button class="${D2.withSketch?"":"on"}" onclick="App.sketchMode(false)">📝 글로만 넣기</button>
+      </div>
+      <div class="prompt" id="dPrompt"></div>
+      <button class="btn" style="width:100%;margin-top:10px" onclick="App.copyPrompt()">📋 주문서 복사하기</button>
+      <div class="how">
+        <b>사용 방법</b><br>
+        1. 설계 카드를 다 쓰고 <b>저장</b>해요.<br>
+        2. <b>주문서를 복사</b>해서 캔바나 ChatGPT에 붙여 넣어요.<br>
+        ${D2.withSketch?"3. 스케치북 앱에서 저장한 <b>내 그림도 함께 첨부</b>해요.<br>":""}
+        ${D2.withSketch?"4":"3"}. 마음에 들 때까지 고쳐 달라고 해 보세요.
+      </div>
+    </div>
+  </div>`;
+}
+
+function readDesign(){
+  const v = id => (document.getElementById(id)?.value || "").trim();
+  return {
+    name: v("dName"), cause: v("dCause"),
+    feats: [0,1,2].map(i=>({ text:v("dF"+i), cat:v("dFc"+i) })),
+    floor: v("dFloor"), roof: v("dRoof"), color: v("dColor"),
+    mats: [...document.querySelectorAll("#dMats button.on")].map(b=>b.textContent),
+    must: v("dMust"),
+  };
+}
+function missingOf(d){
+  const miss = [];
+  if(!d.name) miss.push("건물 이름");
+  if(!d.cause) miss.push("해결하는 문제");
+  if(d.feats.filter(f=>f.text).length < 3) miss.push("친환경 기능 3가지");
+  if(!d.color) miss.push("색깔");
+  if(!d.mats.length) miss.push("재료");
+  return miss;
+}
+function buildPrompt(d, withSketch){
+  const feats = d.feats.filter(f=>f.text).map((f,i)=>`  ${i+1}) ${f.text}`).join("\n") || "  (아직 없음)";
+  const look = [d.floor, d.roof, d.color && `색깔은 ${d.color}`, d.mats.length && `재료는 ${d.mats.join(", ")}`].filter(Boolean).join(", ");
+  return (withSketch
+    ? "첨부한 스케치 그림을 바탕으로, 기후 위기를 이겨내는 친환경 건물 한 채를 그려 주세요.\n스케치의 전체 모양과 배치를 최대한 살려 주세요.\n"
+    : "기후 위기를 이겨내는 친환경 건물 한 채를 그려 주세요.\n")
++ `
+[건물 정보]
+- 건물 이름: ${d.name || "(아직 없음)"}
+- 이 건물이 해결하는 문제: ${d.cause || "(아직 없음)"}
+- 친환경 기능:
+${feats}
+- 생김새: ${look || "(아직 없음)"}
+${d.must ? `- 꼭 지켜야 할 것: ${d.must}\n` : ""}
+[그림 규칙]
+- 건물 한 채만 그리고, 사람과 글자와 간판은 넣지 마세요.
+- 위에서 비스듬히 내려다본 아이소메트릭 시점으로 그려 주세요.
+- 밝고 부드러운 색감의 귀여운 3D 일러스트 스타일로 그려 주세요.
+- 배경은 아무것도 없는 순수한 흰색으로 하고, 바닥 그림자는 넣지 마세요.
+- 건물 전체가 잘리지 않고 그림 가운데에 오게 해 주세요.`;
+}
+/* =========================================================
+   건물 이미지 — 학생 1명당 문서 1개, 바뀐 것만 한 번씩 받아요
+   ========================================================= */
+const IMG = {}, IMGP = {};
+const imgDocId = (g,name) => `img_g${g}_${String(name).replace(/\//g,"_")}`;
+async function ensureImgs(g, map){
+  let changed = false;
+  await Promise.all(Object.entries(map||{}).map(async ([name,t]) => {
+    const k = g+"|"+name;
+    if(IMG[k] && IMG[k].t===t) return;
+    const pk = k+"|"+t;
+    IMGP[pk] ||= DB.get(imgDocId(g,name));
+    const d = await IMGP[pk];
+    if(d && d.data){ IMG[k] = {t, data:d.data, w:d.w, h:d.h}; changed = true; }
+  }));
+  return changed;
+}
+async function copyText(text){
+  try{ await navigator.clipboard.writeText(text); }
+  catch(e){ const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(_){ } ta.remove(); }
+}
+const bNameOf = (c, who) => c.designs?.[who]?.name || c.buildings?.find(b=>b.owner===who)?.name || who;
+
+/* ---------- 3단계: 건물 (배경 지우기는 전부 이 기기에서 처리) ---------- */
+const E = { w:0, h:0, orig:null, mask:null, tool:"erase", size:22, tol:40, undo:[] };
+function renderStep3(){
+  const d = S.gdata.designs[S.name];
+  return `
+  <div class="guide">🏗️ AI가 만든 <b>건물 그림을 올리면 흰 배경이 자동으로 지워져요.</b> 덜 지워진 곳은 지우개로 다듬고 저장하면 우리 마을에 놓을 수 있어요.</div>
+  <div class="design">
+    <div class="panel">
+      <h3>① 그림 만들어 올리기</h3>
+      <div class="how" style="margin-top:0">
+        1. 주문서를 복사해서 캔바나 ChatGPT에 붙여 넣어요.<br>
+        2. 스케치북 앱의 내 그림도 함께 넣어요.<br>
+        3. 완성된 그림을 <b>기기에 저장</b>해요.<br>
+        4. 아래 버튼으로 그 그림을 올려요.
+      </div>
+      ${d ? `<button class="btn ghost" style="width:100%;margin-top:10px" onclick="B.copy()">📋 내 AI 주문서 복사하기</button>`
+          : `<p style="margin-top:10px;color:#c0502a;font-weight:700">⚠️ 2단계에서 설계 카드를 먼저 저장해 주세요.</p>`}
+      <label class="btn filebtn">🖼️ AI가 만든 그림 올리기<input type="file" accept="image/*" hidden onchange="B.load(this.files[0]);this.value=''"></label>
+      ${UNLOCK_ALL ? `<button class="btn ghost" style="width:100%;margin-top:10px" onclick="B.sample()">🧪 예시 건물로 해 보기 (확인용)</button>` : ""}
+      <div id="bSaved"></div>
+    </div>
+    <div class="panel">
+      <h3>② 배경 지우고 다듬기</h3>
+      <div id="bEmpty" class="empty">그림을 올리면 여기에 나타나요</div>
+      <div id="bEdit" class="hidden">
+        <div class="checker"><canvas id="bCanvas"></canvas></div>
+        <div class="slide">배경 지우기 세기 <input type="range" min="5" max="130" value="${E.tol}" onchange="B.setTol(+this.value)"></div>
+        <div class="tools">
+          <button class="tg ${E.tool==="erase"?"on":""}" data-t="erase" onclick="B.tool('erase')">🧽 지우개</button>
+          <button class="tg ${E.tool==="restore"?"on":""}" data-t="restore" onclick="B.tool('restore')">🖌️ 되살리기</button>
+          <button class="tg" onclick="B.undo()">↩️ 되돌리기</button>
+        </div>
+        <div class="slide">붓 크기 <input type="range" min="6" max="70" value="${E.size}" oninput="E.size=+this.value"></div>
+        <button class="btn" style="width:100%;margin-top:12px;font-size:16px" onclick="B.save()">💾 건물 저장하기</button>
+      </div>
+    </div>
+  </div>`;
+}
+const SAMPLE_BUILDING = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
+<rect width="800" height="800" fill="#fdfdfc"/>
+<path d="M220 380 400 470v190L220 570z" fill="#f1dfbc"/><path d="M400 470 580 380v190L400 660z" fill="#dcc79b"/>
+<path d="M220 380 400 290l180 90-180 90z" fill="#6dbb5a"/><path d="M220 380 400 470l180-90v14L400 484 220 394z" fill="#4c9a43"/>
+<path d="M318 372l82-41 82 41-82 41z" fill="#2c6fb5" stroke="#dfeeff" stroke-width="4"/><path d="M359 351l82 41M441 351l-82 41" stroke="#9cc6f0" stroke-width="3"/>
+<path d="M250 440l50 25v50l-50-25zM325 477l50 25v50l-50-25z" fill="#bfe3f5" stroke="#8a7350" stroke-width="4"/>
+<path d="M250 520l50 25v30l-50-25zM325 557l50 25v30l-50-25z" fill="#7cc46a" stroke="#8a7350" stroke-width="4"/>
+<path d="M430 545l45-22v100l-45 22z" fill="#a8743d"/><path d="M500 470l50-25v55l-50 25z" fill="#bfe3f5" stroke="#8a7350" stroke-width="4"/>
+<path d="M596 500v110c0 14 22 24 48 24s48-10 48-24V500z" fill="#3a8bd1"/><ellipse cx="644" cy="500" rx="48" ry="20" fill="#6fb3ea" stroke="#2c6fa8" stroke-width="4"/>
+<path d="M580 470q30-30 62 8" fill="none" stroke="#777" stroke-width="8"/>
+<path d="M506 318h10v44h-10z" fill="#8a5a2b"/><circle cx="511" cy="300" r="30" fill="#3f9a4a"/><circle cx="494" cy="314" r="18" fill="#56b35f"/>
+</svg>`;
+const B = {
+  mount(){
+    B.showSaved();
+    ensureImgs(S.group, S.gdata.imgs).then(ch => { if(ch && S.view===3) B.showSaved(); });
+    if(E.orig) B.showEditor();
+  },
+  showSaved(){
+    const el = $("#bSaved"); if(!el) return;
+    const im = IMG[S.group+"|"+S.name];
+    el.innerHTML = im ? `<div class="savedpic"><div style="font-weight:700;margin-bottom:6px">✅ 저장된 내 건물</div><img src="${im.data}" alt=""><div style="margin-top:8px"><button class="btn sm" onclick="App.go(4)">🏘️ 마을에 놓으러 가기</button></div></div>` : "";
+  },
+  copy(){ const d = S.gdata.designs[S.name]; if(!d) return; copyText(buildPrompt(d, true)); toast("주문서를 복사했어요 📋"); },
+  load(file){
+    if(!file) return;
+    const url = URL.createObjectURL(file);
+    B.fromURL(url, () => URL.revokeObjectURL(url));
+  },
+  sample(){ B.fromURL(svgURI(SAMPLE_BUILDING)); },
+  fromURL(url, done){
+    const im = new Image();
+    im.onload = () => {
+      const k = Math.min(1, 640/Math.max(im.width, im.height));
+      E.w = Math.max(1, Math.round(im.width*k)); E.h = Math.max(1, Math.round(im.height*k));
+      const c = document.createElement("canvas"); c.width = E.w; c.height = E.h;
+      const x = c.getContext("2d"); x.drawImage(im, 0, 0, E.w, E.h);
+      E.orig = x.getImageData(0, 0, E.w, E.h).data; E.undo = [];
+      done && done();
+      B.auto(); B.showEditor();
+    };
+    im.onerror = () => toast("그림을 열 수 없어요");
+    im.src = url;
+  },
+  // 가장자리에서 시작해 배경색과 비슷한 곳만 지워요 (건물 안의 흰 벽은 남아요)
+  auto(){
+    const {w,h,orig:o} = E, n = w*h, m = new Uint8Array(n).fill(255), tol = E.tol;
+    const cs = [0, w-1, (h-1)*w, n-1]; let r=0,g=0,b=0;
+    cs.forEach(i => { r+=o[i*4]; g+=o[i*4+1]; b+=o[i*4+2]; }); r/=4; g/=4; b/=4;
+    const bg = i => o[i*4+3] < 12 || Math.max(Math.abs(o[i*4]-r), Math.abs(o[i*4+1]-g), Math.abs(o[i*4+2]-b)) <= tol;
+    const st = [];
+    const push = i => { if(m[i]===255 && bg(i)){ m[i]=0; st.push(i); } };
+    for(let x=0;x<w;x++){ push(x); push((h-1)*w+x); }
+    for(let y=0;y<h;y++){ push(y*w); push(y*w+w-1); }
+    while(st.length){
+      const i = st.pop(), x = i%w;
+      if(x>0) push(i-1); if(x<w-1) push(i+1); if(i>=w) push(i-w); if(i<n-w) push(i+w);
+    }
+    for(let i=0;i<n;i++){            // 경계 부드럽게
+      if(m[i]!==255) continue; const x = i%w;
+      if((x>0&&m[i-1]===0)||(x<w-1&&m[i+1]===0)||(i>=w&&m[i-w]===0)||(i<n-w&&m[i+w]===0)) m[i]=140;
+    }
+    E.mask = m;
+  },
+  setTol(v){ E.tol = v; if(!E.orig) return; E.undo.push(E.mask); B.auto(); B.draw(); },
+  tool(t){ E.tool = t; document.querySelectorAll(".tools .tg[data-t]").forEach(b => b.classList.toggle("on", b.dataset.t===t)); },
+  undo(){ const m = E.undo.pop(); if(!m) return toast("되돌릴 것이 없어요"); E.mask = m; B.draw(); },
+  showEditor(){
+    const c = $("#bCanvas"); if(!c) return;
+    $("#bEmpty").classList.add("hidden"); $("#bEdit").classList.remove("hidden");
+    c.width = E.w; c.height = E.h; B.draw();
+    let last = null;
+    const pos = e => { const r = c.getBoundingClientRect(); return [(e.clientX-r.left)*E.w/r.width, (e.clientY-r.top)*E.h/r.height, E.w/r.width]; };
+    const dab = (x,y,rad) => {
+      const v = E.tool==="erase" ? 0 : 255, r2 = rad*rad;
+      for(let yy=Math.max(0,Math.floor(y-rad)); yy<=Math.min(E.h-1,Math.ceil(y+rad)); yy++)
+        for(let xx=Math.max(0,Math.floor(x-rad)); xx<=Math.min(E.w-1,Math.ceil(x+rad)); xx++)
+          if((xx-x)*(xx-x)+(yy-y)*(yy-y) <= r2) E.mask[yy*E.w+xx] = v;
+    };
+    const stroke = e => {
+      const [x,y,k] = pos(e), rad = E.size*k/2;
+      if(last){ const d = Math.hypot(x-last[0], y-last[1]), n = Math.max(1, Math.ceil(d/(rad/2||1)));
+        for(let i=1;i<=n;i++) dab(last[0]+(x-last[0])*i/n, last[1]+(y-last[1])*i/n, rad); }
+      else dab(x,y,rad);
+      last = [x,y]; B.draw();
+    };
+    c.onpointerdown = e => { c.setPointerCapture(e.pointerId); E.undo.push(E.mask.slice()); if(E.undo.length>12) E.undo.shift(); last=null; E.down=true; stroke(e); };
+    c.onpointermove = e => { if(E.down) stroke(e); };
+    c.onpointerup = c.onpointercancel = () => { E.down=false; last=null; };
+  },
+  draw(){
+    const c = $("#bCanvas"); if(!c || !E.orig) return;
+    const id = new ImageData(new Uint8ClampedArray(E.orig), E.w, E.h), p = id.data, m = E.mask;
+    for(let i=0;i<m.length;i++) p[i*4+3] = p[i*4+3]*m[i]/255;
+    c.getContext("2d").putImageData(id, 0, 0);
+  },
+  async save(){
+    if(!E.orig) return;
+    const {w,h,mask:m} = E; let x0=w, y0=h, x1=-1, y1=-1;
+    for(let y=0;y<h;y++) for(let x=0;x<w;x++) if(m[y*w+x]>40 && E.orig[(y*w+x)*4+3]>40){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
+    if(x1<0) return toast("남은 그림이 없어요");
+    const cw = x1-x0+1, ch = y1-y0+1, src = $("#bCanvas");
+    const make = max => { const k = Math.min(1, max/Math.max(cw,ch)), c = document.createElement("canvas");
+      c.width = Math.max(1,Math.round(cw*k)); c.height = Math.max(1,Math.round(ch*k));
+      c.getContext("2d").drawImage(src, x0, y0, cw, ch, 0, 0, c.width, c.height);
+      let u = c.toDataURL("image/webp", 0.85); if(!u.startsWith("data:image/webp")) u = c.toDataURL("image/png");
+      return {data:u, w:c.width, h:c.height}; };
+    let out = make(380); if(out.data.length > 600000) out = make(260); if(out.data.length > 600000) out = make(180);
+    const t = Date.now();
+    await DB.update(imgDocId(S.group, S.name), d => { Object.assign(d, out, {by:S.name, t}); });
+    await DB.update("g"+S.group, g => { (g.imgs ||= {})[S.name] = t; });
+    IMG[S.group+"|"+S.name] = {t, ...out}; S.gdata.imgs[S.name] = t;
+    toast("건물을 저장했어요 ✅"); B.showSaved();
+  },
+};
+window.B = B; window.E = E;
+
+/* ---------- 4단계: 마을 ---------- */
+const TN = 22, TW = 64, TH = 32, VW = TN*TW + 100, VH = TN*TH + 230, OX = VW/2, OY = 170;
+const GROUND = { g:["🌿","잔디"], r:["🛣️","도로"], w:["💧","물"], f:["🟫","밭"], s:["🏖️","모래"], p:["⬜","광장"], t:["🚋","트램길"] };
+const GCOL = { r:"#c7c9cc", w:"#6ec1ea", f:"#c49a6c", s:"#f0dca0", p:"#e9e1d5", t:"#c7c9cc" };
+const svgURI = s => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
+const emoP = e => svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="84" font-size="86" text-anchor="middle">${e}</text></svg>`);
+const PROPS = [
+  {id:"lamp", name:"가로등", w:22, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 110"><rect x="6" y="2" width="28" height="5" rx="2" fill="#2c6fb5"/><rect x="18.5" y="7" width="3" height="8" fill="#555"/><circle cx="20" cy="24" r="11" fill="#ffe680" stroke="#555" stroke-width="2.5"/><rect x="18" y="34" width="4" height="70" fill="#555"/><rect x="12" y="102" width="16" height="6" rx="2" fill="#444"/></svg>`)},
+  {id:"solar", name:"태양광판", w:56, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 74"><path d="M28 54v16M72 44v24" stroke="#666" stroke-width="5"/><path d="M8 46 58 8l36 14-50 40z" fill="#2c6fb5" stroke="#e8f2ff" stroke-width="3"/><path d="M33 27l36 15M20 37l37 15M33 54 82 17M56 9 20 37" stroke="#9cc6f0" stroke-width="1.5" fill="none"/></svg>`)},
+  {id:"wind", name:"풍력발전기", w:70, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 170"><path d="M52 62h6l4 104H48z" fill="#f4f4f4" stroke="#aaa" stroke-width="2"/>${[10,130,250].map(a=>`<path transform="rotate(${a} 55 58)" d="M55 58 50 12q5-10 10 0z" fill="#fff" stroke="#aaa" stroke-width="2"/>`).join("")}<circle cx="55" cy="58" r="6" fill="#ddd" stroke="#999" stroke-width="2"/></svg>`)},
+  {id:"tank", name:"빗물 저금통", w:38, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 96"><path d="M8 18v60c0 8 14 14 32 14s32-6 32-14V18z" fill="#3a8bd1"/><ellipse cx="40" cy="18" rx="32" ry="12" fill="#6fb3ea" stroke="#2c6fa8" stroke-width="2"/><path d="M8 40c0 8 14 14 32 14s32-6 32-14M8 60c0 8 14 14 32 14s32-6 32-14" fill="none" stroke="#2c6fa8" stroke-width="2"/><path d="M40 30c-5 7-7 10-7 13a7 7 0 0 0 14 0c0-3-2-6-7-13z" fill="#fff" opacity=".85"/></svg>`)},
+  {id:"charger", name:"전기차 충전소", w:22, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100"><path d="M36 40q12 0 10 22t-10 26" fill="none" stroke="#444" stroke-width="3"/><rect x="10" y="14" width="26" height="80" rx="5" fill="#f6f7f6" stroke="#3f8f5a" stroke-width="3"/><rect x="15" y="20" width="16" height="12" rx="2" fill="#bfe3f5"/><path d="M25 40 17 58h7l-3 16 11-21h-7z" fill="#f2b90f"/><rect x="6" y="92" width="34" height="6" rx="2" fill="#555"/></svg>`)},
+  {id:"fence", name:"울타리 (뒤집기로 방향 바꾸기)", w:74, ns:true, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 76"><path d="M5 16 67 47M5 28 67 59" stroke="#b9824a" stroke-width="5" stroke-linecap="round"/><rect x="3" y="6" width="6" height="34" rx="2" fill="#8a5a2b"/><rect x="23" y="16" width="6" height="34" rx="2" fill="#8a5a2b"/><rect x="43" y="26" width="6" height="34" rx="2" fill="#8a5a2b"/><rect x="63" y="36" width="6" height="34" rx="2" fill="#8a5a2b"/></svg>`)},
+  {id:"bench", name:"벤치 (뒤집기로 방향 바꾸기)", w:46, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 82 78"><path d="M22 10v22M72 35v22M10 38v14M58 62v14M70 56v12" stroke="#555" stroke-width="4" stroke-linecap="round"/><path d="M20 6 74 33v8L20 14zM20 17 74 44v7L20 24z" fill="#c08a50" stroke="#8a5a2b" stroke-width="1.5"/><path d="M8 34 60 60 74 53 22 27z" fill="#b9824a" stroke="#8a5a2b" stroke-width="1.5"/><path d="M8 34 60 60v6L8 40z" fill="#93622f"/></svg>`)},
+  {id:"rock", name:"바위", w:36, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 58"><path d="M8 48Q2 32 18 20 30 4 50 12 72 16 75 36 78 50 62 52H16z" fill="#9aa0a6" stroke="#6f757b" stroke-width="3"/><path d="M22 26Q32 12 48 17 38 21 33 32z" fill="#c9ced2"/><path d="M50 30q10 2 12 14" fill="none" stroke="#7d848a" stroke-width="3" stroke-linecap="round"/></svg>`)},
+  {id:"corn", name:"옥수수", w:26, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 114"><path d="M30 112V16" stroke="#4c9a43" stroke-width="5"/><path d="M30 14q-8-10-3-13M30 14q8-10 3-13M30 14V1" stroke="#c9a94a" stroke-width="2.5" fill="none"/><path d="M30 96Q10 86 3 100 14 78 30 84zM30 76Q52 64 58 80 48 56 30 64zM30 54Q10 42 4 58 12 34 30 42zM30 36Q48 26 54 40 46 18 30 24z" fill="#5fb04e"/><ellipse cx="39" cy="58" rx="6" ry="13" transform="rotate(20 39 58)" fill="#f2c72e" stroke="#6cae4a" stroke-width="3"/><ellipse cx="21" cy="74" rx="6" ry="13" transform="rotate(-20 21 74)" fill="#f2c72e" stroke="#6cae4a" stroke-width="3"/></svg>`)},
+  {id:"apple", name:"사과나무", w:58, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 108"><rect x="45" y="70" width="10" height="36" fill="#8a5a2b"/><circle cx="50" cy="42" r="32" fill="#4fa357"/><circle cx="28" cy="56" r="20" fill="#5bb565"/><circle cx="72" cy="56" r="20" fill="#3f9a4a"/><circle cx="34" cy="34" r="6" fill="#e2463c"/><circle cx="58" cy="28" r="6" fill="#e2463c"/><circle cx="70" cy="52" r="6" fill="#e2463c"/><circle cx="44" cy="58" r="6" fill="#e2463c"/><circle cx="24" cy="58" r="6" fill="#e2463c"/><circle cx="56" cy="70" r="6" fill="#e2463c"/></svg>`)},
+  {id:"bed", name:"텃밭 상자", w:50, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 90 52"><path d="M6 22h78l-6 26H12z" fill="#a8743d" stroke="#7a5228" stroke-width="3"/><ellipse cx="45" cy="22" rx="39" ry="8" fill="#6b4a2b"/><path d="M22 22q-8-12-10-4 6 2 10 4 2-14 9-10-2 8-9 10" fill="#5fb04e"/><path d="M40 22q-8-12-10-4 6 2 10 4 2-14 9-10-2 8-9 10" fill="#5fb04e"/><path d="M58 22q-8-12-10-4 6 2 10 4 2-14 9-10-2 8-9 10" fill="#5fb04e"/><path d="M74 22q-8-12-10-4 6 2 10 4 2-14 9-10-2 8-9 10" fill="#5fb04e"/></svg>`)},
+  {id:"green", name:"온실", w:90, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 88"><path d="M8 78V40Q55-8 102 40v38z" fill="#dff3f8" stroke="#7fa8b5" stroke-width="4"/><path d="M32 22v56M55 16v62M78 22v56M8 46h94" stroke="#9cc3cf" stroke-width="2.5"/><circle cx="22" cy="68" r="8" fill="#5fb04e"/><circle cx="44" cy="66" r="9" fill="#4fa357"/><circle cx="68" cy="67" r="8" fill="#5fb04e"/><circle cx="90" cy="69" r="7" fill="#4fa357"/><circle cx="44" cy="62" r="3" fill="#e2463c"/><circle cx="70" cy="64" r="3" fill="#e2463c"/><rect x="4" y="76" width="102" height="8" rx="3" fill="#8f9aa0"/></svg>`)},
+  {id:"compost", name:"퇴비통", w:26, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 70"><path d="M10 20h40l-5 46H15z" fill="#3f7d4d" stroke="#2c5a37" stroke-width="3"/><rect x="5" y="12" width="50" height="9" rx="3" fill="#2c5a37"/><path d="M30 34q-10 4-8 16 12 0 14-10-6 2-8 8 0-8 2-14z" fill="#bfe6a8"/></svg>`)},
+  {id:"hive", name:"벌통", w:26, src:svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 70"><path d="M14 60v8M46 60v8" stroke="#7a5228" stroke-width="5"/><rect x="10" y="20" width="40" height="14" fill="#f2c94c" stroke="#b98a1e" stroke-width="2.5"/><rect x="10" y="34" width="40" height="14" fill="#f7d774" stroke="#b98a1e" stroke-width="2.5"/><rect x="10" y="48" width="40" height="14" fill="#f2c94c" stroke="#b98a1e" stroke-width="2.5"/><path d="M5 20 30 6l25 14z" fill="#a8743d"/><rect x="24" y="52" width="12" height="5" rx="2" fill="#5a3d1c"/></svg>`)},
+  ...[["tree","나무","🌳",58],["pine","소나무","🌲",54],["palm","야자수","🌴",56],["tulip","꽃","🌷",22],["sun","해바라기","🌻",26],["rice","벼","🌾",30],["cow","소","🐄",40],["hen","닭","🐓",22],["fount","분수","⛲",46],["bike","자전거","🚲",32],["stop","정류장","🚏",30],["tram","트램","🚋",50],["bus","전기버스","🚌",46],["car","전기차","🚙",36],["boat","배","⛵",50]].map(([id,name,e,w])=>({id,name,w,src:emoP(e)})),
+];
+const PROP = Object.fromEntries(PROPS.map(p=>[p.id,p]));
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+
+const V = {
+  mode:0, tool:"move", sel:null, z:1, tx:0, ty:0, minZ:.3, local:{}, localGround:{}, timers:{}, view:null, ptrs:new Map(), a:null, pinch:null, labels:true,
+  ctx(){
+    if(V.mode===0){
+      const items = {...(S.vdata.items||{}), ...V.local}; Object.keys(items).forEach(k => items[k]===null && delete items[k]);
+      return { g:S.group, items, ground:{...(S.vdata.ground||{}), ...V.localGround}, likes:S.vdata.likes||{}, designs:S.gdata.designs, buildings:S.gdata.buildings, imgs:S.gdata.imgs, concept:S.gdata.concept, edit:!S.lock };
+    }
+    const v = V.view || {};
+    return { g:V.mode, items:v.items||{}, ground:v.ground||{}, likes:v.likes||{}, designs:v.designs||{}, buildings:v.buildings||[], imgs:v.imgs||{}, concept:v.concept||null, edit:false, loading:!V.view };
+  },
+  html(){
+    return `
+    <div class="vwrap">
+      <div class="vside" id="vSide"></div>
+      <div class="vport" id="vPort">
+        <div class="vworld" id="vWorld" style="width:${VW}px;height:${VH}px"><canvas id="vGround"></canvas><div id="vItems"></div></div>
+        <div class="vmsg hidden" id="vMsg"></div>
+        <div class="vzoom"><button onclick="V.zoomBy(1.25)">＋</button><button onclick="V.zoomBy(0.8)">－</button><button onclick="V.fit()" title="전체 보기">⤢</button><button onclick="V.toggleLabels()" title="이름표">🏷️</button></div>
+        <div class="vbar hidden" id="vBar"></div>
+      </div>
+    </div>`;
+  },
+  mount(){
+    V.port = $("#vPort"); if(!V.port) return;
+    V.world = $("#vWorld"); V.gc = $("#vGround"); V.itemsEl = $("#vItems");
+    V.gc.width = VW; V.gc.height = VH;
+    const p = V.port; p.onpointerdown = V.down; p.onpointermove = V.move; p.onpointerup = V.up; p.onpointercancel = V.up;
+    p.onwheel = e => { e.preventDefault(); const r = p.getBoundingClientRect(); V.zoomAt(e.clientX-r.left, e.clientY-r.top, V.z*(e.deltaY<0?1.12:0.89)); };
+    V.ptrs.clear(); V.a = null; V.pinch = null;
+    V.fit(); V.refresh();
+    if(V.mode===0) ensureImgs(S.group, S.gdata.imgs).then(ch => { if(ch) V.refresh(); });
+  },
+  async loadView(g){      // 교사 화면: 다른 모둠 마을은 열 때 한 번만 읽어요 (실시간 아님)
+    V.mode = g; V.sel = null; V.view = null; V.refresh();
+    const [gd, vd] = await Promise.all([DB.get("g"+g), DB.get("v"+g)]);
+    await ensureImgs(g, gd.imgs);
+    if(V.mode!==g) return;
+    V.view = { items:vd.items||{}, ground:vd.ground||{}, likes:vd.likes||{}, designs:gd.designs||{}, buildings:gd.buildings||[], imgs:gd.imgs||{}, concept:gd.concept||null };
+    V.refresh();
+  },
+  refresh(){
+    if(!document.getElementById("vPort")) return;
+    if(V.a && V.a.type==="drag"){ V.dirty = true; return; }
+    const c = V.ctx();
+    if(V.sel && !c.items[V.sel]) V.sel = null;
+    V.drawGround(c); V.drawItems(c); V.drawSide(c); V.drawBar(c);
+    const msg = $("#vMsg"), text = c.loading ? "불러오는 중…" : (V.mode ? "" : (S.lock ? "🔒 지금은 마을을 고칠 수 없어요 (구경 시간)" : ""));
+    msg.textContent = text; msg.classList.toggle("hidden", !text);
+  },
+  drawGround(c){
+    const x = V.gc.getContext("2d"); x.clearRect(0,0,VW,VH);
+    const hw = TN*TW/2, hh = TN*TH/2;
+    x.fillStyle = "#8a6a45"; x.beginPath(); x.moveTo(OX-hw,OY+hh); x.lineTo(OX,OY+2*hh); x.lineTo(OX+hw,OY+hh); x.lineTo(OX+hw,OY+hh+26); x.lineTo(OX,OY+2*hh+26); x.lineTo(OX-hw,OY+hh+26); x.fill();
+    for(let i=0;i<TN;i++) for(let j=0;j<TN;j++){
+      const t = c.ground[i+"_"+j] || "g", cx = OX+(i-j)*TW/2, cy = OY+(i+j)*TH/2;
+      x.beginPath(); x.moveTo(cx,cy); x.lineTo(cx+TW/2,cy+TH/2); x.lineTo(cx,cy+TH); x.lineTo(cx-TW/2,cy+TH/2); x.closePath();
+      x.fillStyle = t==="g" ? ((i+j)%2 ? "#9fd47f" : "#96cc76") : GCOL[t]; x.fill();
+      if(t==="f"){ x.fillStyle = "#5fa04a"; for(const [a,b] of [[-12,14],[0,10],[12,14],[0,20]]){ x.beginPath(); x.arc(cx+a, cy+b, 2.6, 0, 7); x.fill(); } }
+      if(t==="t"){   // 트램길: 도로 위에 레일 두 줄 (이어진 방향을 따라가요)
+        const isT = (a,b) => c.ground[a+"_"+b]==="t", my = cy+TH/2;
+        const alongI = isT(i-1,j)||isT(i+1,j), alongJ = isT(i,j-1)||isT(i,j+1);
+        const rail = (dx,dy,px,py) => { for(const q of [-.15,.15]){
+          x.strokeStyle = "#f1f2f3"; x.lineWidth = 4.5; x.beginPath(); x.moveTo(cx-dx/2+px*q, my-dy/2+py*q); x.lineTo(cx+dx/2+px*q, my+dy/2+py*q); x.stroke();
+          x.strokeStyle = "#5d6168"; x.lineWidth = 2;   x.beginPath(); x.moveTo(cx-dx/2+px*q, my-dy/2+py*q); x.lineTo(cx+dx/2+px*q, my+dy/2+py*q); x.stroke(); } };
+        if(alongI || !alongJ) rail(TW/2, TH/2, -TW/2, TH/2);
+        if(alongJ) rail(-TW/2, TH/2, TW/2, TH/2);
+      }
+      if(t==="w"){ x.strokeStyle = "rgba(255,255,255,.55)"; x.lineWidth = 1.5; x.beginPath(); x.moveTo(cx-10,cy+15); x.quadraticCurveTo(cx-5,cy+11,cx,cy+15); x.quadraticCurveTo(cx+5,cy+19,cx+10,cy+15); x.stroke(); }
+    }
+  },
+  drawItems(c){
+    V.itemsEl.innerHTML = Object.entries(c.items).map(([id,it]) => {
+      let src, w, label = "", sh = false;
+      if(it.k==="b"){ const im = IMG[c.g+"|"+it.r]; if(!im) return ""; src = im.data; w = 170*it.s;
+        label = bNameOf(c, it.r); }
+      else { const p = PROP[it.r]; if(!p) return ""; src = p.src; w = p.w*it.s; sh = !p.ns; }
+      return `<div class="vi ${V.sel===id?"sel":""}" data-id="${esc(id)}" style="left:${it.x}px;top:${it.y}px;z-index:${Math.round(it.y)}">
+        ${sh ? `<i class="sh" style="width:${w*.8}px;height:${w*.2}px"></i>` : ""}
+        <img draggable="false" src="${src}" alt="" style="width:${w}px;left:${-w/2}px;${it.f?"transform:scaleX(-1)":""}">
+        ${label && V.labels ? `<span class="lb">${esc(label)}</span>` : ""}</div>`;
+    }).join("");
+  },
+  drawSide(c){
+    const el = $("#vSide"); if(!el) return;
+    const names = Object.keys(c.imgs||{});
+    const cc = c.concept, con = cc ? `<div class="vconcept"><b>${esc(cc.name)}</b><div class="theme">💡 ${esc(cc.theme)}</div>${V.mode?`<p>${esc(cc.desc)}</p>`:""}</div>` : "";
+    const tray = `<h4>🏠 ${V.mode?V.mode+"모둠":"우리 모둠"} 건물</h4><div class="vtray">${names.map((n,i)=>{
+      const placed = !!c.items["b_"+n], im = IMG[c.g+"|"+n];
+      return `<button onclick="V.trayTap(${i})">${im?`<img src="${im.data}" alt="">`:""}<span>${esc(bNameOf(c,n))}<small>${esc(n)} · ${placed?"놓여 있음":"아직 안 놓음"}</small></span></button>`;
+    }).join("") || `<p style="font-size:13px;color:var(--sub)">아직 저장된 건물이 없어요${V.mode?"":" (3단계에서 저장)"}</p>`}</div>`;
+    V.trayNames = names;
+    if(!c.edit){ el.innerHTML = con + tray; return; }
+    el.innerHTML = con + `
+      <h4>🖐️ 도구</h4>
+      <div class="vtools"><button class="${V.tool==="move"?"on":""}" style="grid-column:1/3" onclick="V.setTool('move')">✋ 고르기·옮기기</button>
+      ${Object.entries(GROUND).map(([k,[e,n]])=>`<button class="${V.tool===k?"on":""}" onclick="V.setTool('${k}')">${e} ${n}</button>`).join("")}</div>
+      <p style="font-size:12px;color:var(--sub);margin-top:6px">땅 종류를 고르고 땅을 문지르면 칠해져요.</p>
+      ${tray}
+      <h4>🌳 소품 (누르면 추가)</h4>
+      <div class="vprops">${PROPS.map(p=>`<button title="${p.name}" onclick="V.addProp('${p.id}')"><img src="${p.src}" alt="${p.name}"></button>`).join("")}</div>`;
+  },
+  drawBar(c){
+    const el = $("#vBar"); if(!el) return;
+    const it = V.sel && c.edit ? c.items[V.sel] : null;
+    el.classList.toggle("hidden", !it); if(!it) return;
+    const nm = it.k==="b" ? bNameOf(c, it.r) : PROP[it.r]?.name;
+    el.innerHTML = `<span class="nm">${esc(nm||"")}</span>
+      <button onclick="V.act('l')">◀</button><button onclick="V.act('u')">▲</button><button onclick="V.act('d')">▼</button><button onclick="V.act('r')">▶</button><span class="sep"></span>
+      <button onclick="V.act('-')" title="작게">➖</button><button onclick="V.act('+')" title="크게">➕</button><button onclick="V.act('f')" title="좌우 뒤집기">↔️</button><span class="sep"></span>
+      <button onclick="V.act('x')" title="${it.k==="b"?"마을에서 치우기":"지우기"}">🗑️</button>`;
+  },
+  /* ----- 화면 이동·확대 ----- */
+  applyT(){ V.world.style.transform = `translate(${V.tx}px,${V.ty}px) scale(${V.z})`; },
+  fit(){ const r = V.port.getBoundingClientRect(); V.z = Math.min(r.width/VW, r.height/VH) || .5; V.minZ = V.z*.7; V.tx = (r.width-VW*V.z)/2; V.ty = (r.height-VH*V.z)/2; V.applyT(); },
+  zoomAt(px, py, nz){ nz = clamp(nz, V.minZ, 3); V.tx = px-(px-V.tx)*nz/V.z; V.ty = py-(py-V.ty)*nz/V.z; V.z = nz; V.applyT(); },
+  zoomBy(f){ const r = V.port.getBoundingClientRect(); V.zoomAt(r.width/2, r.height/2, V.z*f); },
+  toggleLabels(){ V.labels = !V.labels; V.refresh(); },
+  toWorld(e){ const r = V.port.getBoundingClientRect(); return [(e.clientX-r.left-V.tx)/V.z, (e.clientY-r.top-V.ty)/V.z]; },
+  centerWorld(){ const r = V.port.getBoundingClientRect(); return [clamp((r.width/2-V.tx)/V.z + (Math.random()-.5)*70, 40, VW-40), clamp((r.height/2-V.ty)/V.z + (Math.random()-.5)*50, OY, VH-40)]; },
+  lookAt(it){ const r = V.port.getBoundingClientRect(); V.tx = r.width/2-it.x*V.z; V.ty = r.height/2-(it.y-40)*V.z; V.applyT(); },
+  /* ----- 손가락/마우스 ----- */
+  down(e){
+    if(e.target.closest(".vzoom,.vbar")) return;
+    V.port.setPointerCapture(e.pointerId);
+    V.ptrs.set(e.pointerId, {x:e.clientX, y:e.clientY});
+    if(V.ptrs.size===2){
+      V.endAct(true);
+      const [p,q] = [...V.ptrs.values()], r = V.port.getBoundingClientRect();
+      V.pinch = { d:Math.hypot(p.x-q.x, p.y-q.y)||1, z:V.z, tx:V.tx, ty:V.ty, mx:(p.x+q.x)/2-r.left, my:(p.y+q.y)/2-r.top };
+      return;
+    }
+    const c = V.ctx(), el = e.target.closest(".vi"), base = { sx:e.clientX, sy:e.clientY, tx:V.tx, ty:V.ty, moved:false };
+    if(el && c.edit && V.tool==="move"){
+      const id = el.dataset.id, it = c.items[id]; if(!it) return;
+      if(V.sel!==id){ V.sel = id; V.drawItems(c); V.drawBar(c); }
+      V.a = { ...base, type:"drag", id, it:{...it}, el:[...V.itemsEl.children].find(x=>x.dataset.id===id) };
+    }
+    else if(el && !c.edit) V.a = { ...base, type:"tap", id:el.dataset.id };
+    else if(c.edit && V.tool!=="move"){ V.a = { ...base, type:"paint", ch:{} }; V.paint(V.toWorld(e)); }
+    else V.a = { ...base, type:"pan" };
+  },
+  move(e){
+    const p = V.ptrs.get(e.pointerId); if(!p) return; p.x = e.clientX; p.y = e.clientY;
+    if(V.pinch){
+      if(V.ptrs.size<2) return;
+      const [a,b] = [...V.ptrs.values()], r = V.port.getBoundingClientRect(), k = V.pinch;
+      const nz = clamp(k.z*Math.hypot(a.x-b.x, a.y-b.y)/k.d, V.minZ, 3), mx = (a.x+b.x)/2-r.left, my = (a.y+b.y)/2-r.top;
+      V.tx = mx-(k.mx-k.tx)*nz/k.z; V.ty = my-(k.my-k.ty)*nz/k.z; V.z = nz; V.applyT(); return;
+    }
+    const a = V.a; if(!a) return;
+    const dx = e.clientX-a.sx, dy = e.clientY-a.sy;
+    if(Math.abs(dx)+Math.abs(dy) > 6) a.moved = true;
+    if(a.type==="drag"){
+      if(!a.moved) return;
+      const o = V.ctx().items[a.id] || a.it;
+      if(!a.x0){ a.x0 = a.it.x; a.y0 = a.it.y; }
+      a.it.x = Math.round(clamp(a.x0+dx/V.z, 20, VW-20)); a.it.y = Math.round(clamp(a.y0+dy/V.z, 40, VH-10));
+      V.local[a.id] = a.it;
+      if(a.el){ a.el.style.left = a.it.x+"px"; a.el.style.top = a.it.y+"px"; a.el.style.zIndex = a.it.y; }
+    }
+    else if(a.type==="paint") V.paint(V.toWorld(e));
+    else if(a.moved){ V.tx = a.tx+dx; V.ty = a.ty+dy; V.applyT(); }
+  },
+  up(e){
+    if(!V.ptrs.delete(e.pointerId)) return;
+    if(V.pinch){ if(V.ptrs.size<2) V.pinch = null; return; }
+    V.endAct(false);
+  },
+  endAct(cancel){
+    const a = V.a; V.a = null; if(!a) return;
+    if(a.type==="drag"){ if(a.moved) V.saveItem(a.id); if(V.dirty){ V.dirty = false; V.refresh(); } }
+    else if(a.type==="paint") V.saveGround(a.ch);
+    else if(a.type==="pan"){ if(!a.moved && !cancel && V.sel){ V.sel = null; V.refresh(); } }
+    else if(a.type==="tap"){ if(!a.moved && !cancel) V.card(a.id); }
+  },
+  /* ----- 땅 칠하기 ----- */
+  paint([x,y]){
+    const u = (x-OX)/(TW/2), v = (y-OY)/(TH/2), i = Math.floor((u+v)/2), j = Math.floor((v-u)/2);
+    if(i<0 || j<0 || i>=TN || j>=TN) return;
+    const k = i+"_"+j, c = V.ctx(); if((c.ground[k]||"g")===V.tool) return;
+    V.localGround[k] = V.tool; V.a.ch[k] = V.tool; c.ground[k] = V.tool; V.drawGround(c);
+  },
+  async saveGround(ch){
+    if(!Object.keys(ch).length) return;
+    const put = g => { for(const [k,t] of Object.entries(ch)){ if(t==="g") delete g[k]; else g[k] = t; } };
+    await DB.update("v"+S.group, d => { put(d.ground ||= {}); });
+    put(S.vdata.ground ||= {});
+    for(const [k,t] of Object.entries(ch)) if(V.localGround[k]===t) delete V.localGround[k];
+  },
+  /* ----- 건물·소품 ----- */
+  setTool(t){ V.tool = t; if(t!=="move") V.sel = null; V.refresh(); },
+  trayTap(i){
+    const n = V.trayNames[i], c = V.ctx(), id = "b_"+n, it = c.items[id];
+    if(!c.edit){ if(it) V.card(id); return; }
+    if(it){ V.sel = id; V.tool = "move"; V.lookAt(it); V.refresh(); return; }
+    if(!IMG[c.g+"|"+n]) return toast("그림을 불러오는 중이에요");
+    const [x,y] = V.centerWorld();
+    V.local[id] = { k:"b", r:n, x:Math.round(x), y:Math.round(y), s:1, f:0 }; V.sel = id; V.tool = "move"; V.refresh(); V.saveItem(id);
+  },
+  addProp(pid){
+    const c = V.ctx(); if(!c.edit) return;
+    if(Object.values(c.items).filter(i=>i.k==="p").length >= 80) return toast("소품은 80개까지 놓을 수 있어요");
+    const [x,y] = V.centerWorld(), id = "p_"+uid();
+    V.local[id] = { k:"p", r:pid, x:Math.round(x), y:Math.round(y), s:1, f:0 }; V.sel = id; V.tool = "move"; V.refresh(); V.saveItem(id);
+  },
+  act(k){
+    const c = V.ctx(), id = V.sel, o = c.items[id]; if(!o || !c.edit) return;
+    if(k==="x"){ clearTimeout(V.timers[id]); delete V.timers[id]; V.local[id] = null; V.sel = null; V.refresh(); V.saveItem(id); return; }
+    const it = {...o};
+    if(k==="l") it.x -= 4; if(k==="r") it.x += 4; if(k==="u") it.y -= 4; if(k==="d") it.y += 4;
+    if(k==="+") it.s = Math.min(3, +(it.s*1.08).toFixed(3)); if(k==="-") it.s = Math.max(.3, +(it.s/1.08).toFixed(3));
+    if(k==="f") it.f = it.f ? 0 : 1;
+    it.x = clamp(it.x, 20, VW-20); it.y = clamp(it.y, 40, VH-10);
+    V.local[id] = it; V.refresh();
+    clearTimeout(V.timers[id]); V.timers[id] = setTimeout(() => V.saveItem(id), 700);   // 여러 번 눌러도 한 번만 저장
+  },
+  async saveItem(id){
+    clearTimeout(V.timers[id]); delete V.timers[id];
+    if(!(id in V.local)) return;
+    const it = V.local[id];
+    await DB.update("v"+S.group, d => { d.items ||= {}; if(it===null) delete d.items[id]; else d.items[id] = it; });
+    S.vdata.items ||= {}; if(it===null) delete S.vdata.items[id]; else S.vdata.items[id] = it;
+    if(V.local[id]===it) delete V.local[id];
+  },
+  flush(){ Object.keys(V.timers).forEach(id => V.saveItem(id)); },
+  /* ----- 건물 설명 카드 + 칭찬 ----- */
+  card(id){
+    const c = V.ctx(), it = c.items[id]; if(!it || it.k!=="b") return;
+    const d = c.designs[it.r] || {}, im = IMG[c.g+"|"+it.r];
+    $("#modalRoot").innerHTML = `
+    <div class="modal-bg" onclick="if(event.target===this)V.closeCard()">
+      <div class="modal">
+        <div class="left" style="text-align:center"><div class="checker" style="padding:14px">${im?`<img src="${im.data}" style="max-width:100%;max-height:300px" alt="">`:""}</div></div>
+        <div class="right">
+          <div><button class="close-x" onclick="V.closeCard()">✕</button><h3>${esc(bNameOf(c, it.r))}</h3></div>
+          <div style="font-size:13px;color:var(--sub)">${c.g}모둠 · 설계자 ${esc(it.r)}</div>
+          ${d.cause?`<div class="q" style="margin:0">🌍 해결하는 문제: ${esc(d.cause)}</div>`:""}
+          ${(d.feats||[]).filter(f=>f.text).map(f=>`<div class="real" style="margin:0">${CATS[f.cat]?.icon||"✅"} ${esc(f.text)}</div>`).join("")}
+        </div>
+      </div>
+    </div>`;
+  },
+  closeCard(){ $("#modalRoot").innerHTML = ""; },
+};
+window.V = V;
+
+
+/* =========================================================
+   9. 교사 앱 — 모둠 내용은 [불러오기] 할 때만 읽어요
+   ========================================================= */
+const T = {
+  stage:1, g:1, data:null,
+  init(){
+    DB.watch("settings", d => { T.stage = d.stage||1; T.lock = !!d.lock; T.render(); });
+    let last = 0; try{ last = +localStorage.getItem("ga_t_g") || 0; }catch(e){}
+    if(last) T.load(last);       // 새로고침하면 보던 모둠을 한 번 다시 불러와요
+  },
+  async toggleLock(){ await DB.update("settings", d => { d.lock = !d.lock; }); },
+  async setStage(n){ await DB.update("settings", d => { d.stage = n; }); toast(`${n}단계까지 열었어요`); },
+  async load(g){
+    T.g = g; T.data = null; T.render();
+    try{ localStorage.setItem("ga_t_g", g); }catch(e){}
+    const d = await DB.get("g"+g); if(T.g!==g) return;
+    T.data = d; T.render();
+    if(await ensureImgs(g, d.imgs) && T.g===g) T.render();
+  },
+  /* ----- 발표용 마을 보기 (칠판 화면) ----- */
+  openVillage(g){
+    let el = $("#tVillage");
+    if(!el){ el = document.createElement("div"); el.id = "tVillage"; el.className = "tvil"; document.body.appendChild(el); }
+    el.innerHTML = `
+      <div class="thead">
+        <b style="font-family:'Jua';font-size:22px;margin-right:6px">🗺️ 모둠 마을 발표</b>
+        ${Array.from({length:GROUP_COUNT},(_,i)=>`<button class="btn sm ${g===i+1?"":"ghost"}" onclick="T.openVillage(${i+1})">${i+1}모둠</button>`).join("")}
+        <span style="flex:1"></span>
+        <button class="btn sm ghost" onclick="T.openVillage(${g})" title="학생들이 고친 내용을 다시 불러와요">🔄 새로고침</button>
+        <button class="btn sm ghost" onclick="T.full()">⛶ 전체 화면</button>
+        <button class="btn sm" onclick="T.closeVillage()">✕ 닫기</button>
+      </div>
+      ${V.html()}`;
+    V.mount(); V.loadView(g).then(() => V.fit());
+  },
+  full(){ const d = document; if(d.fullscreenElement) d.exitFullscreen?.(); else d.documentElement.requestFullscreen?.().catch(()=>{}); setTimeout(()=>{ if($("#vPort")) V.fit(); }, 300); },
+  closeVillage(){ $("#tVillage")?.remove(); V.mode = 0; V.view = null; if(document.fullscreenElement) document.exitFullscreen?.(); },
+  async delNote(id){
+    if(!await ask("이 포스트잇을 지울까요?")) return;
+    await DB.update("g"+T.g, d => { d.notes = (d.notes||[]).filter(x=>x.id!==id); });
+    T.load(T.g);
+  },
+  async resetGroup(){
+    if(!await ask(`${T.g}모둠의 보드, 마을 컨셉, 건물 목록, 설계 카드, 마을을 모두 지울까요?`)) return;
+    await DB.update("g"+T.g, d => { d.notes = []; d.buildings = []; d.designs = {}; d.imgs = {}; d.concept = null; });
+    await DB.update("v"+T.g, d => { d.items = {}; d.ground = {}; d.likes = {}; });
+    T.load(T.g);
+  },
+  render(){
+    const d = T.data;
+    $("#teacherMain").innerHTML = `
+    <div class="t-grid">
+      <div class="panel">
+        <h3>🚦 단계 열기</h3>
+        <p style="font-size:13px;color:var(--sub);margin-bottom:10px">누른 단계까지 학생에게 열려요.</p>
+        <div class="stage-btns">${STEPS.map(s=>`<button class="${T.stage===s.n?"on":""}" onclick="T.setStage(${s.n})">${s.icon} ${s.n}단계 · ${s.name}${T.stage>=s.n?" ✓":""}</button>`).join("")}</div>
+        <h3 style="margin-top:16px">🔒 마을 잠금</h3>
+        <p style="font-size:13px;color:var(--sub);margin-bottom:10px">발표 시간에 잠그면 학생이 마을을 고칠 수 없어요.</p>
+        <button class="btn ${T.lock?"red":"ghost"}" style="width:100%" onclick="T.toggleLock()">${T.lock?"🔒 잠겨 있음 (눌러서 풀기)":"🔓 열려 있음 (눌러서 잠그기)"}</button>
+        <h3 style="margin-top:16px">🗺️ 모둠 마을 보기 (발표용)</h3>
+        <p style="font-size:13px;color:var(--sub);margin-bottom:10px">칠판 화면에 크게 띄워요. 건물을 누르면 설명이 나와요.</p>
+        <div class="gsel" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">${Array.from({length:GROUP_COUNT},(_,i)=>`<button class="btn sm" onclick="T.openVillage(${i+1})">${i+1}모둠 마을</button>`).join("")}</div>
+        ${useFirebase?"":`<p style="margin-top:12px"><span class="mode-badge">체험 모드</span></p>`}
+      </div>
+      <div class="panel">
+        <h3>👀 모둠 살펴보기</h3>
+        <div class="gsel">${Array.from({length:GROUP_COUNT},(_,i)=>`<button class="btn sm ${d&&T.g===i+1?"":"ghost"}" onclick="T.load(${i+1})">${i+1}모둠 불러오기</button>`).join("")}</div>
+        ${!d ? `<p style="color:var(--sub)">${T.g&&localStorage.getItem("ga_t_g")?"불러오는 중…":"모둠을 눌러 불러오세요."}</p>` : `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px;gap:6px;flex-wrap:wrap">
+            <b style="font-size:18px">${T.g}모둠 · 포스트잇 ${(d.notes||[]).length}장 · 건물 ${(d.buildings||[]).length}개</b>
+            <span style="display:flex;gap:6px"><button class="btn sm ghost" onclick="T.load(${T.g})">🔄 새로고침</button><button class="btn sm red" onclick="T.resetGroup()">이 모둠 초기화</button></span>
+          </div>
+          <div class="panel concept" style="padding:12px">${d.concept?`<div class="cview"><h2>🌱 ${esc(d.concept.name)}</h2><div class="theme">💡 ${esc(d.concept.theme)}</div><p>${esc(d.concept.desc)}</p></div>`:`<b>🌱 마을 컨셉</b> <span style="color:var(--sub)">아직 정하지 않았어요</span>`}</div>
+          <div class="cause"><h3>🌍 기후 난민은 왜 생길까?</h3><div class="notes">${(d.notes||[]).filter(n=>n.cat==="cause").map(n=>`
+            <div class="note"><div class="from">${esc(n.by)} · ❤️${n.hearts?.length||0}</div>${esc(n.idea)}
+            <div class="foot"><span></span><button style="background:none;color:#d9534f;font-size:12px" onclick="T.delNote('${n.id}')">삭제</button></div></div>`).join("") || `<p style="color:var(--sub);font-size:13px">아직 없어요</p>`}</div></div>
+          <div class="board">${Object.entries(CATS).map(([k,v])=>`
+            <div class="col" style="border-color:${v.color};min-height:120px">
+              <h3>${v.icon} ${v.name}</h3>
+              ${(d.notes||[]).filter(n=>n.cat===k).map(n=>`
+                <div class="note"><div class="from">${esc(n.by)}${n.cardTitle?` · ${esc(n.cardTitle)}`:""} · ❤️${n.hearts?.length||0}</div>
+                ${esc(n.idea||"")}${n.problem?`<div><span class="k">해결:</span> ${esc(n.problem)}</div>`:""}${n.use?`<div><span class="k">우리 마을:</span> ${esc(n.use)}</div>`:""}
+                <div class="foot"><span></span><button style="background:none;color:#d9534f;font-size:12px" onclick="T.delNote('${n.id}')">삭제</button></div></div>`).join("")}
+            </div>`).join("")}
+          </div>
+          <h3 style="margin:16px 0 8px">📐 학생 건물 설계 (${Object.keys(d.designs||{}).length}명)</h3>
+          ${Object.entries(d.designs||{}).map(([who,x])=>T.dcard(who,x)).join("") || `<p style="color:var(--sub)">아직 없어요</p>`}
+          <h3 style="margin:16px 0 8px">🏘️ 건물 목록</h3>
+          ${(d.buildings||[]).map((b,i)=>`<div class="bitem"><div class="num">${i+1}</div><div class="info"><b>${esc(b.name)}</b> ${b.cats.map(k=>CATS[k].icon).join("")}<p>${esc(b.desc||"")}</p></div>${b.owner?`<span class="owner">👤 ${esc(b.owner)}</span>`:`<span class="owner" style="background:#ffe9e0;color:#c0502a">담당 없음</span>`}</div>`).join("") || `<p style="color:var(--sub)">아직 없어요</p>`}
+        `}
+      </div>
+    </div>`;
+  },
+};
+T.dcard = (who, x) => {
+  const im = IMG[T.g+"|"+who], miss = missingOf({feats:[], mats:[], ...x});
+  const look = [x.floor, x.roof, x.color && `색깔: ${x.color}`].filter(Boolean).map(esc).join(" · ");
+  return `<div class="dcard">
+    <div class="thumb">${im?`<img src="${im.data}" alt="">`:"건물 그림<br>아직 없음"}</div>
+    <div>
+      <h4>${esc(x.name||"(이름 없음)")} <span style="font-size:14px;color:var(--sub)">· ${esc(who)}</span> ${miss.length?`<span class="status no">미완성</span>`:`<span class="status ok">완성</span>`}</h4>
+      <div class="dinfo">
+        <div><span class="k">해결하는 문제</span> ${esc(x.cause||"-")}</div>
+        ${(x.feats||[]).filter(f=>f.text).map((f,i)=>`<div>${CATS[f.cat]?.icon||"✅"} ${esc(f.text)}</div>`).join("")}
+        ${look?`<div><span class="k">생김새</span> ${look}</div>`:""}
+        ${(x.mats||[]).length?`<div><span class="k">재료</span> ${x.mats.map(esc).join(", ")}</div>`:""}
+        ${x.must?`<div><span class="k">꼭 지킬 것</span> ${esc(x.must)}</div>`:""}
+        ${miss.length?`<div style="color:#c0502a;font-size:13px">빠진 것: ${miss.join(", ")}</div>`:""}
+      </div>
+      <details style="margin-top:6px"><summary style="cursor:pointer;font-size:13px;color:var(--sub)">AI 주문서 보기</summary><div class="prompt" style="margin-top:6px">${esc(buildPrompt({feats:[], mats:[], ...x},true))}</div></details>
+    </div>
+  </div>`;
+};
+window.T = T;
+
+App.init();
+</script>
+</body>
+</html>
