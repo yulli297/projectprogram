@@ -1222,8 +1222,8 @@ window.B = B; window.E = E;
 
 /* ---------- 4단계: 마을 ---------- */
 const TN = 22, TW = 64, TH = 32, VW = TN*TW + 100, VH = TN*TH + 230, OX = VW/2, OY = 170;
-const GROUND = { g:["🌿","잔디"], r:["🛣️","도로"], w:["💧","물"], f:["🟫","밭"], s:["🏖️","모래"], p:["⬜","광장"], t:["🚋","트램길"] };
-const GCOL = { r:"#c7c9cc", w:"#6ec1ea", f:"#c49a6c", s:"#f0dca0", p:"#e9e1d5", t:"#c7c9cc" };
+const GROUND = { g:["🌿","잔디"], r:["🛣️","도로"], w:["💧","물"], h:["🌊","얕은 물"], d:["🪵","나무 다리"], k:["🟧","수상 데크"], f:["🟫","밭"], s:["🏖️","모래"], p:["⬜","광장"], t:["🚋","트램길"] };
+const GCOL = { r:"#c7c9cc", w:"#6ec1ea", h:"#a7dcef", d:"#6ec1ea", k:"#6ec1ea", f:"#c49a6c", s:"#f0dca0", p:"#e9e1d5", t:"#c7c9cc" };
 const svgURI = s => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(s);
 const emoP = e => svgURI(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text x="50" y="84" font-size="86" text-anchor="middle">${e}</text></svg>`);
 const PROPS = [
@@ -1313,7 +1313,48 @@ const V = {
         if(alongI || !alongJ) rail(TW/2, TH/2, -TW/2, TH/2);
         if(alongJ) rail(-TW/2, TH/2, TW/2, TH/2);
       }
-      if(t==="w"){ x.strokeStyle = "rgba(255,255,255,.55)"; x.lineWidth = 1.5; x.beginPath(); x.moveTo(cx-10,cy+15); x.quadraticCurveTo(cx-5,cy+11,cx,cy+15); x.quadraticCurveTo(cx+5,cy+19,cx+10,cy+15); x.stroke(); }
+      if(t==="h"){   // 얕은 물: 밝은 물빛 + 바닥 모래 점
+        x.fillStyle = "rgba(240,220,160,.75)"; for(const [a,b] of [[-14,16],[6,9],[14,18],[-2,22]]){ x.beginPath(); x.arc(cx+a, cy+b, 1.8, 0, 7); x.fill(); }
+        x.strokeStyle = "rgba(255,255,255,.7)"; x.lineWidth = 1.2; x.beginPath(); x.moveTo(cx-6,cy+12); x.quadraticCurveTo(cx-2,cy+9,cx+2,cy+12); x.stroke();
+      }
+      if(t==="w"||t==="d"||t==="k"){ x.strokeStyle = "rgba(255,255,255,.55)"; x.lineWidth = 1.5; x.beginPath(); x.moveTo(cx-10,cy+15); x.quadraticCurveTo(cx-5,cy+11,cx,cy+15); x.quadraticCurveTo(cx+5,cy+19,cx+10,cy+15); x.stroke(); }
+    }
+    // 두 번째로: 물 위에 기둥으로 띄운 나무 다리·데크 (앞쪽 칸이 나중에 그려지도록 대각선 순서로)
+    const tiles = [];
+    for(let i=0;i<TN;i++) for(let j=0;j<TN;j++){ const t = c.ground[i+"_"+j]; if(t==="d"||t==="k") tiles.push([i,j,t]); }
+    tiles.sort((a,b) => (a[0]+a[1])-(b[0]+b[1]));
+    const UP = 5;    // 물 위로 떠 있는 높이
+    const poly = (pts, fill) => { x.fillStyle = fill; x.beginPath(); pts.forEach(([a,b],n)=> n?x.lineTo(a,b):x.moveTo(a,b)); x.closePath(); x.fill(); };
+    const post = (a,b) => { x.fillStyle = "#4e3319"; x.fillRect(a-1.6, b-1, 3.2, UP+6); x.fillStyle = "rgba(255,255,255,.5)"; x.fillRect(a-3, b+UP+4, 6, 1.2); };
+    const isWood = (a,b) => { const g = c.ground[a+"_"+b]; return g==="d"||g==="k"; };
+    const isLand = (a,b) => { if(a<0||b<0||a>=TN||b>=TN) return false; const g = c.ground[a+"_"+b] || "g"; return !"whdk".includes(g); };
+    for(const [i,j,t] of tiles){
+      const cx = OX+(i-j)*TW/2, my = OY+(i+j)*TH/2 + TH/2 - UP;
+      if(t==="k"){   // 수상 데크: 칸 전체를 덮는 나무 바닥
+        const s = 1, L=[cx-TW/2*s,my], B=[cx,my+TH/2*s], R=[cx+TW/2*s,my], T=[cx,my-TH/2*s];
+        [L,B,R].forEach(([a,b]) => post(a + (a<cx?3:a>cx?-3:0), b - (b>my?2:0)));
+        poly([L,B,[B[0],B[1]+3],[L[0],L[1]+3]], "#7a5130"); poly([B,R,[R[0],R[1]+3],[B[0],B[1]+3]], "#6a4527");
+        poly([L,B,R,T], "#c58d55");
+        x.strokeStyle = "#9c6a3c"; x.lineWidth = 1;
+        for(let q=-.75;q<=.76;q+=.25){ x.beginPath(); x.moveTo(cx-TW/4*s+q*TW/4*s, my-TH/4*s-q*TH/4*s); x.lineTo(cx+TW/4*s+q*TW/4*s, my+TH/4*s-q*TH/4*s); x.stroke(); }
+        continue;
+      }
+      // 나무 다리: 이어진 다리·데크 방향을 따라가요. 없으면 붙어 있는 땅 쪽으로 놓여요.
+      let alongI = isWood(i-1,j)||isWood(i+1,j), alongJ = isWood(i,j-1)||isWood(i,j+1);
+      if(!alongI && !alongJ){ alongI = isLand(i-1,j)||isLand(i+1,j); alongJ = !alongI && (isLand(i,j-1)||isLand(i,j+1)); }
+      if(!alongI && !alongJ) alongI = true;
+      const plank = (dx,dy,px,py) => {
+        const w = .24, a=[cx-dx/2+px*w, my-dy/2+py*w], b=[cx+dx/2+px*w, my+dy/2+py*w], c2=[cx+dx/2-px*w, my+dy/2-py*w], d=[cx-dx/2-px*w, my-dy/2-py*w];
+        const lowA = a[1]>d[1] ? [a,b] : [d,c2];       // 앞쪽(아래) 모서리에 두께와 기둥
+        post(cx + (lowA[0][0]+lowA[1][0]-2*cx)*.35 - dx*.2, (lowA[0][1]+lowA[1][1])/2 - dy*.2);
+        post(cx + (lowA[0][0]+lowA[1][0]-2*cx)*.35 + dx*.2, (lowA[0][1]+lowA[1][1])/2 + dy*.2);
+        poly([lowA[0],lowA[1],[lowA[1][0],lowA[1][1]+3],[lowA[0][0],lowA[0][1]+3]], "#6a4527");
+        poly([a,b,c2,d], "#c58d55");
+        x.strokeStyle = "#8f5f34"; x.lineWidth = 1.1;
+        for(let q=1;q<6;q++){ const f = q/6; x.beginPath(); x.moveTo(a[0]+(b[0]-a[0])*f, a[1]+(b[1]-a[1])*f); x.lineTo(d[0]+(c2[0]-d[0])*f, d[1]+(c2[1]-d[1])*f); x.stroke(); }
+      };
+      if(alongI) plank(TW/2, TH/2, -TW/2, TH/2);
+      if(alongJ) plank(-TW/2, TH/2, TW/2, TH/2);
     }
   },
   drawItems(c){
