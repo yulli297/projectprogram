@@ -683,16 +683,37 @@ const App = {
     if(!S.gdata.concept) return toast("먼저 마을 컨셉을 저장해 주세요");
     if(!name) return toast("건물 이름을 적어 주세요");
     if(!cats.length) return toast("분류를 하나 이상 골라 주세요");
+    const eid = D1.editB;
+    if(eid && !S.gdata.buildings.some(b=>b.id===eid)){ D1.editB = null; render(); return toast("그 사이에 지워진 건물이에요"); }
     ["bName","bDesc","bOwner"].forEach(id => $("#"+id).value = "");
     document.querySelectorAll(".catpick button.on").forEach(b => App.pickCat(b));
+    D1.editB = null;
+    if(eid){
+      await DB.update("g"+S.group, d => { const b = (d.buildings||[]).find(x=>x.id===eid); if(b) Object.assign(b, { name, desc, owner, cats }); });
+      render(); return toast("건물 정보를 고쳤어요");
+    }
     await DB.update("g"+S.group, d => { (d.buildings ||= []).push({ id:uid(), name, desc, owner, cats, by:S.name }); });
     toast("목록에 추가했어요");
+  },
+  editBuilding(bid){      // 왼쪽 칸에 불러와서 고쳐요
+    const b = S.gdata.buildings.find(x=>x.id===bid); if(!b) return;
+    D1.editB = bid; render();
+    $("#bName").value = b.name; $("#bDesc").value = b.desc||""; $("#bOwner").value = b.owner||"";
+    document.querySelectorAll(".catpick button.on").forEach(x => App.pickCat(x));
+    b.cats.forEach(k => { const x = document.querySelector(`.catpick button[data-k="${k}"]`); if(x) App.pickCat(x); });
+    $("#bName").focus();
+  },
+  cancelEdit(){
+    D1.editB = null; render();
+    ["bName","bDesc","bOwner"].forEach(id => $("#"+id).value = "");
+    document.querySelectorAll(".catpick button.on").forEach(b => App.pickCat(b));
   },
   async claim(bid){
     await DB.update("g"+S.group, d => { const b=(d.buildings||[]).find(x=>x.id===bid); if(b) b.owner = (b.owner===S.name? "" : S.name); });
   },
   async delBuilding(bid){
     if(!await ask("이 건물을 목록에서 지울까요?")) return;
+    if(D1.editB===bid) App.cancelEdit();
     await DB.update("g"+S.group, d => { d.buildings = (d.buildings||[]).filter(x=>x.id!==bid); });
   },
 
@@ -846,7 +867,7 @@ function renderBoard(){
   <div class="board">${Object.keys(CATS).map(col).join("")}</div>`;
 }
 
-const D1 = { editConcept:false };   // 화면 상태(저장 안 함)
+const D1 = { editConcept:false, editB:null };   // 화면 상태(저장 안 함)
 function renderConcept(){
   const c = S.gdata.concept;
   if(c && !D1.editConcept) return `
@@ -894,7 +915,7 @@ function renderList(){
   ${renderConcept()}
   <div class="blist-wrap">
     <div class="panel">
-      <h3>➕ 2. 건물 추가</h3>
+      ${D1.editB&&bs.some(b=>b.id===D1.editB)?`<h3>✏️ 건물 고치기 <span style="font-size:14px;color:var(--sub);font-weight:400">${bs.findIndex(b=>b.id===D1.editB)+1}번 건물</span></h3>`:`<h3>➕ 2. 건물 추가</h3>`}
       ${ok?"":`<p style="background:#fff4d6;border-radius:10px;padding:8px 10px;font-size:14px;margin-bottom:6px">🔒 위에서 마을 컨셉을 먼저 저장하면 건물을 추가할 수 있어요.</p>`}
       <div class="${ok?"":"locked-panel"}">
       <label>건물 이름</label>
@@ -905,7 +926,9 @@ function renderList(){
       <input id="bDesc" placeholder="예) 지붕은 태양광, 안에서는 채소를 길러요" maxlength="50">
       <label>맡을 사람 (나중에 정해도 돼요)</label>
       <input id="bOwner" placeholder="이름" maxlength="10">
-      <button class="btn" style="width:100%;margin-top:14px" onclick="App.addBuilding()">목록에 추가</button>
+      ${D1.editB&&bs.some(b=>b.id===D1.editB)
+        ? `<div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" onclick="App.cancelEdit()">취소</button><button class="btn" style="flex:1" onclick="App.addBuilding()">고친 내용 저장</button></div>`
+        : `<button class="btn" style="width:100%;margin-top:14px" onclick="App.addBuilding()">목록에 추가</button>`}
       </div>
     </div>
     <div class="panel">
@@ -916,7 +939,7 @@ function renderList(){
         <span class="${has("energy")?"ok":"no"}">${has("energy")?"✅":"⚠️"} 에너지 건물 ${has("energy")?"있음":"아직 없어요"}</span>
       </div>
       ${bs.map((b,i)=>`
-        <div class="bitem">
+        <div class="bitem" ${D1.editB===b.id?'style="border-color:var(--main);background:#f0f9f2"':""}>
           <div class="num">${i+1}</div>
           <div class="info">
             <b>${esc(b.name)}</b> ${b.cats.map(k=>CATS[k].icon).join("")}
@@ -924,6 +947,7 @@ function renderList(){
           </div>
           ${b.owner?`<span class="owner">👤 ${esc(b.owner)}</span>`:""}
           <button class="btn sm ${b.owner===S.name?"":"ghost"}" onclick="App.claim('${b.id}')">${b.owner===S.name?"맡기 취소":"내가 맡기"}</button>
+          <button class="btn sm ghost" title="고치기" onclick="App.editBuilding('${b.id}')">✏️</button>
           <button class="btn sm ghost" style="border-color:#ccc;color:#999" onclick="App.delBuilding('${b.id}')">✕</button>
         </div>`).join("") || `<p style="color:var(--sub)">아직 건물이 없어요. 왼쪽에서 추가해 보세요.</p>`}
     </div>
