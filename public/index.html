@@ -162,6 +162,10 @@ main{padding:18px 22px 40px;max-width:1400px;margin:0 auto}
 
 /* ---------- 2단계 설계 ---------- */
 .design{display:grid;grid-template-columns:1.15fr 1fr;gap:16px;align-items:start}
+.slotbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px;font-weight:700}
+.slotbar button{padding:8px 14px;border-radius:999px;background:#fff;border:2px solid var(--line);font-weight:700;font-size:14px;color:var(--ink)}
+.slotbar button.on{background:var(--main);border-color:var(--main);color:#fff}
+.slotbar button.add{border-style:dashed;color:var(--main)}
 .design .panel label{margin:14px 0 6px}
 .design .panel label:first-of-type{margin-top:0}
 .feat{display:grid;grid-template-columns:28px 1fr 130px;gap:8px;align-items:center;margin-bottom:8px}
@@ -539,7 +543,7 @@ const App = {
         await DB.update("g"+S.group, d => { (d.pins ||= {})[name] = 1; });
       }
     } finally { App.busy = false; }
-    S.name = name;
+    S.name = name; S.slot = 1;
     try{ localStorage.setItem(ROOT+"_me", JSON.stringify({cls:CLS, group:S.group, name, code})); }catch(e){}
     $("#login").classList.add("hidden");
     $("#studentApp").classList.remove("hidden");
@@ -726,17 +730,21 @@ const App = {
     st.className = "status " + (miss.length?"no":"ok");
     st.textContent = miss.length ? `아직: ${miss.join(", ")}` : "✅ 완성!";
   },
+  setSlot(k){
+    if(S.view===2){ const d = readDesign(); if(d.name || (d.feats||[]).some(f=>f.text)) S.gdata.designs[BK()] = { ...(S.gdata.designs[BK()]||{}), ...d }; }
+    S.slot = k; E.orig = null; E.mask = null; render();
+  },
   sketchMode(on){
     const d = readDesign();
     D2.withSketch = on;
-    S.gdata.designs[S.name] = { ...(S.gdata.designs[S.name]||{}), ...d };  // 화면 다시 그릴 때 입력 유지
+    S.gdata.designs[BK()] = { ...(S.gdata.designs[BK()]||{}), ...d };  // 화면 다시 그릴 때 입력 유지
     render();
   },
   async saveDesign(){
     const d = readDesign();
     if(!d.name) return toast("건물 이름을 적어 주세요");
     d.t = Date.now();
-    await DB.update("g"+S.group, g => { (g.designs ||= {})[S.name] = d; });
+    await DB.update("g"+S.group, g => { (g.designs ||= {})[BK()] = d; });
     const miss = missingOf(d);
     toast(miss.length ? `저장했어요 (아직: ${miss.join(", ")})` : "설계 카드를 저장했어요 ✅");
   },
@@ -961,8 +969,8 @@ const FLOORS= ["1층","2층","3층","4~5층","6~10층","10층보다 높게"];
 let D2 = { withSketch:true };   // 화면 상태(저장 안 함)
 
 function renderStep2(){
-  const mine = S.gdata.buildings.find(b=>b.owner===S.name);
-  const d = S.gdata.designs[S.name] || {};
+  const mine = S.gdata.buildings.filter(b=>b.owner===S.name)[S.slot-1];
+  const d = S.gdata.designs[BK()] || {};
   const name = d.name ?? (mine?.name || "");
   const causes = S.gdata.notes.filter(n=>n.cat==="cause");
   const f = d.feats || [{},{},{}];
@@ -972,6 +980,7 @@ function renderStep2(){
   return `
   <div class="guide">✏️ <b>내가 맡은 건물의 설계 정보</b>를 적어요. 다 적으면 오른쪽에 <b>AI에게 보낼 주문서(프롬프트)</b>가 자동으로 완성돼요.
   ${mine?"":`<br>⚠️ 1단계 건물 목록에서 아직 맡은 건물이 없어요. 건물 이름을 직접 적어도 돼요.`}</div>
+  ${slotBar()}
   <div class="design">
     <div class="panel" oninput="App.updPrompt()" onchange="App.updPrompt()">
       <h3>📐 건물 설계 카드</h3>
@@ -1088,13 +1097,26 @@ async function copyText(text){
   catch(e){ const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(_){ } ta.remove(); }
 }
 const bNameOf = (c, who) => c.designs?.[who]?.name || c.buildings?.find(b=>b.owner===who)?.name || who;
+// 한 학생이 건물을 여러 개(최대 3개) 만들 수 있어요: 1번은 "이름", 2번부터 "이름(2)"로 따로 저장돼요
+const MAX_SLOT = 3;
+const BK = (k = S.slot) => k > 1 ? `${S.name}(${k})` : S.name;
+function mySlots(){ let n = 1; for(let k=2;k<=MAX_SLOT;k++) if(S.gdata.designs[BK(k)] || S.gdata.imgs[BK(k)]) n = k; return Math.max(n, S.slot); }
+function slotBar(){
+  const n = mySlots();
+  return `<div class="slotbar">🏠 내 건물
+    ${Array.from({length:n},(_,i)=>{ const k=i+1, nm = S.gdata.designs[BK(k)]?.name || "";
+      return `<button class="${S.slot===k?"on":""}" onclick="App.setSlot(${k})">${k}번${nm?` · ${esc(nm)}`:""}</button>`; }).join("")}
+    ${n<MAX_SLOT?`<button class="add" onclick="App.setSlot(${n+1})">＋ 건물 하나 더 만들기</button>`:""}
+  </div>`;
+}
 
 /* ---------- 3단계: 건물 (배경 지우기는 전부 이 기기에서 처리) ---------- */
 const E = { w:0, h:0, orig:null, mask:null, tool:"erase", size:22, tol:40, undo:[] };
 function renderStep3(){
-  const d = S.gdata.designs[S.name];
+  const d = S.gdata.designs[BK()];
   return `
   <div class="guide">🏗️ AI가 만든 <b>건물 그림을 올리면 흰 배경이 자동으로 지워져요.</b> 덜 지워진 곳은 지우개로 다듬고 저장하면 우리 마을에 놓을 수 있어요.</div>
+  ${slotBar()}
   <div class="design">
     <div class="panel">
       <h3>① 그림 만들어 올리기</h3>
@@ -1147,10 +1169,10 @@ const B = {
   },
   showSaved(){
     const el = $("#bSaved"); if(!el) return;
-    const im = IMG[S.group+"|"+S.name];
-    el.innerHTML = im ? `<div class="savedpic"><div style="font-weight:700;margin-bottom:6px">✅ 저장된 내 건물</div><img src="${im.data}" alt=""><div style="margin-top:8px"><button class="btn sm" onclick="App.go(4)">🏘️ 마을에 놓으러 가기</button></div></div>` : "";
+    const im = IMG[S.group+"|"+BK()];
+    el.innerHTML = im ? `<div class="savedpic"><div style="font-weight:700;margin-bottom:6px">✅ 저장된 내 건물 (${S.slot}번)</div><img src="${im.data}" alt=""><div style="margin-top:8px"><button class="btn sm" onclick="App.go(4)">🏘️ 마을에 놓으러 가기</button></div></div>` : "";
   },
-  copy(){ const d = S.gdata.designs[S.name]; if(!d) return; copyText(buildPrompt(d, true)); toast("주문서를 복사했어요 📋"); },
+  copy(){ const d = S.gdata.designs[BK()]; if(!d) return; copyText(buildPrompt(d, true)); toast("주문서를 복사했어요 📋"); },
   load(file){
     if(!file) return;
     const url = URL.createObjectURL(file);
@@ -1236,9 +1258,10 @@ const B = {
       return {data:u, w:c.width, h:c.height}; };
     let out = make(380); if(out.data.length > 600000) out = make(260); if(out.data.length > 600000) out = make(180);
     const t = Date.now();
-    await DB.update(imgDocId(S.group, S.name), d => { Object.assign(d, out, {by:S.name, t}); });
-    await DB.update("g"+S.group, g => { (g.imgs ||= {})[S.name] = t; });
-    IMG[S.group+"|"+S.name] = {t, ...out}; S.gdata.imgs[S.name] = t;
+    const key = BK();
+    await DB.update(imgDocId(S.group, key), d => { Object.assign(d, out, {by:S.name, t}); });
+    await DB.update("g"+S.group, g => { (g.imgs ||= {})[key] = t; });
+    IMG[S.group+"|"+key] = {t, ...out}; S.gdata.imgs[key] = t;
     toast("건물을 저장했어요 ✅"); B.showSaved();
   },
 };
