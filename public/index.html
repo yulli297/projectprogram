@@ -475,12 +475,12 @@ const esc = s => String(s??"").replace(/[&<>"']/g, m => ({"&":"&amp;","<":"&lt;"
 const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function toast(msg){ document.querySelectorAll(".toast").forEach(x=>x.remove()); const t=document.createElement("div"); t.className="toast"; t.textContent=msg; document.body.appendChild(t); setTimeout(()=>t.remove(),1800); }
 // 화면 안 대화상자 (브라우저 기본 창 대신)
-function dialog(msg, withInput){
+function dialog(msg, withInput, init=""){
   return new Promise(res => {
     const bg = document.createElement("div"); bg.className = "modal-bg";
     bg.innerHTML = `<div class="panel" style="width:min(380px,100%);text-align:center">
       <p style="font-size:17px;font-weight:700;margin:6px 0 14px">${esc(msg)}</p>
-      ${withInput?`<input type="password" id="dlgIn" style="margin-bottom:12px">`:""}
+      ${withInput?`<input type="${withInput==="text"?"text":"password"}" id="dlgIn" maxlength="20" value="${esc(init)}" style="margin-bottom:12px">`:""}
       <div style="display:flex;gap:8px"><button class="btn ghost" style="flex:1" data-a="0">취소</button><button class="btn" style="flex:1" data-a="1">확인</button></div></div>`;
     document.body.appendChild(bg);
     const inp = bg.querySelector("#dlgIn"); if(inp){ inp.focus(); inp.onkeydown = e => { if(e.key==="Enter") bg.querySelector('[data-a="1"]').click(); }; }
@@ -563,7 +563,7 @@ const App = {
     });
   },
 
-  go(n){ if(n > S.stage) return toast("아직 열리지 않은 단계예요"); V.flush(); S.view = n; renderSteps(); render(); },
+  async go(n){ if(n > S.stage) return toast("아직 열리지 않은 단계예요"); await App.autoSave(); V.flush(); S.view = n; renderSteps(); render(); },
   sub(s){ S.sub = s; render(); },
   filter(f){ S.filter = f; render(); },
 
@@ -730,9 +730,18 @@ const App = {
     st.className = "status " + (miss.length?"no":"ok");
     st.textContent = miss.length ? `아직: ${miss.join(", ")}` : "✅ 완성!";
   },
-  setSlot(k){
-    if(S.view===2){ const d = readDesign(); if(d.name || (d.feats||[]).some(f=>f.text)) S.gdata.designs[BK()] = { ...(S.gdata.designs[BK()]||{}), ...d }; }
+  async setSlot(k){
+    await App.autoSave();
     S.slot = k; E.orig = null; E.mask = null; render();
+  },
+  async autoSave(){      // 2단계에서 저장 안 누르고 다른 곳으로 가도 이름이 있으면 저장해 둬요
+    if(S.view!==2 || !$("#dName")) return;
+    const d = readDesign(); if(!d.name) return;
+    const old = S.gdata.designs[BK()] || {}, strip = o => JSON.stringify({...o, t:0});
+    if(strip(old) === strip(d)) return;
+    d.t = Date.now(); const key = BK();
+    S.gdata.designs[key] = d;
+    await DB.update("g"+S.group, g => { (g.designs ||= {})[key] = d; });
   },
   sketchMode(on){
     const d = readDesign();
@@ -1096,9 +1105,15 @@ async function copyText(text){
   try{ await navigator.clipboard.writeText(text); }
   catch(e){ const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select(); try{document.execCommand("copy");}catch(_){ } ta.remove(); }
 }
-const bNameOf = (c, who) => c.designs?.[who]?.name || c.buildings?.find(b=>b.owner===who)?.name || who;
+// 건물 이름: 설계 카드 이름 → (없으면) 1단계 목록에서 그 학생이 맡은 건물(2번째 건물이면 두 번째로 맡은 것) → 학생 이름
+const bNameOf = (c, who) => {
+  if(c.designs?.[who]?.name) return c.designs[who].name;
+  const m = /^(.*)\((\d)\)$/.exec(who), owner = m ? m[1] : who, k = m ? +m[2] : 1;
+  return (c.buildings||[]).filter(b=>b.owner===owner)[k-1]?.name || who;
+};
 // 한 학생이 건물을 여러 개(최대 3개) 만들 수 있어요: 1번은 "이름", 2번부터 "이름(2)"로 따로 저장돼요
 const MAX_SLOT = 3;
+const whoLabel = who => { const m = /^(.*)\((\d)\)$/.exec(who); return m ? `${m[1]} ${m[2]}번 건물` : who; };
 const BK = (k = S.slot) => k > 1 ? `${S.name}(${k})` : S.name;
 function mySlots(){ let n = 1; for(let k=2;k<=MAX_SLOT;k++) if(S.gdata.designs[BK(k)] || S.gdata.imgs[BK(k)]) n = k; return Math.max(n, S.slot); }
 function slotBar(){
@@ -1259,10 +1274,18 @@ const B = {
     let out = make(380); if(out.data.length > 600000) out = make(260); if(out.data.length > 600000) out = make(180);
     const t = Date.now();
     const key = BK();
+    if(!S.gdata.designs[key]?.name){      // 설계 카드 없이 올리면 건물 이름만이라도 받아요
+      const guess = bNameOf(S.gdata, key);
+      const nm = ((await dialog("이 건물의 이름을 적어 주세요", "text", guess===key?"":guess)) || "").trim();
+      if(!nm) return toast("건물 이름이 있어야 저장돼요");
+      const d = { ...(S.gdata.designs[key]||{}), name:nm, t };
+      S.gdata.designs[key] = d;
+      await DB.update("g"+S.group, g => { (g.designs ||= {})[key] = { ...((g.designs||{})[key]||{}), name:nm, t }; });
+    }
     await DB.update(imgDocId(S.group, key), d => { Object.assign(d, out, {by:S.name, t}); });
     await DB.update("g"+S.group, g => { (g.imgs ||= {})[key] = t; });
     IMG[S.group+"|"+key] = {t, ...out}; S.gdata.imgs[key] = t;
-    toast("건물을 저장했어요 ✅"); B.showSaved();
+    toast("건물을 저장했어요 ✅"); render();
   },
 };
 window.B = B; window.E = E;
@@ -1422,7 +1445,7 @@ const V = {
     const cc = c.concept, con = cc ? `<div class="vconcept"><b>${esc(cc.name)}</b><div class="theme">💡 ${esc(cc.theme)}</div>${V.mode?`<p>${esc(cc.desc)}</p>`:""}</div>` : "";
     const tray = `<h4>🏠 ${V.mode?V.mode+"모둠":"우리 모둠"} 건물</h4><div class="vtray">${names.map((n,i)=>{
       const placed = !!c.items["b_"+n], im = IMG[c.g+"|"+n];
-      return `<button onclick="V.trayTap(${i})">${im?`<img src="${im.data}" alt="">`:""}<span>${esc(bNameOf(c,n))}<small>${esc(n)} · ${placed?"놓여 있음":"아직 안 놓음"}</small></span></button>`;
+      return `<button onclick="V.trayTap(${i})">${im?`<img src="${im.data}" alt="">`:""}<span>${esc(bNameOf(c,n))}<small>${esc(whoLabel(n))} · ${placed?"놓여 있음":"아직 안 놓음"}</small></span></button>`;
     }).join("") || `<p style="font-size:13px;color:var(--sub)">아직 저장된 건물이 없어요${V.mode?"":" (3단계에서 저장)"}</p>`}</div>`;
     V.trayNames = names;
     if(!c.edit){ el.innerHTML = con + tray; return; }
@@ -1569,7 +1592,7 @@ const V = {
         <div class="left" style="text-align:center"><div class="checker" style="padding:14px">${im?`<img src="${im.data}" style="max-width:100%;max-height:300px" alt="">`:""}</div></div>
         <div class="right">
           <div><button class="close-x" onclick="V.closeCard()">✕</button><h3>${esc(bNameOf(c, it.r))}</h3></div>
-          <div style="font-size:13px;color:var(--sub)">${c.g}모둠 · 설계자 ${esc(it.r)}</div>
+          <div style="font-size:13px;color:var(--sub)">${c.g}모둠 · 설계자 ${esc(whoLabel(it.r))}</div>
           ${d.cause?`<div class="q" style="margin:0">🌍 해결하는 문제: ${esc(d.cause)}</div>`:""}
           ${(d.feats||[]).filter(f=>f.text).map(f=>`<div class="real" style="margin:0">${CATS[f.cat]?.icon||"✅"} ${esc(f.text)}</div>`).join("")}
         </div>
@@ -1691,7 +1714,7 @@ T.dcard = (who, x) => {
   return `<div class="dcard">
     <div class="thumb">${im?`<img src="${im.data}" alt="">`:"건물 그림<br>아직 없음"}</div>
     <div>
-      <h4>${esc(x.name||"(이름 없음)")} <span style="font-size:14px;color:var(--sub)">· ${esc(who)}</span> ${miss.length?`<span class="status no">미완성</span>`:`<span class="status ok">완성</span>`}</h4>
+      <h4>${esc(x.name||"(이름 없음)")} <span style="font-size:14px;color:var(--sub)">· ${esc(whoLabel(who))}</span> ${miss.length?`<span class="status no">미완성</span>`:`<span class="status ok">완성</span>`}</h4>
       <div class="dinfo">
         <div><span class="k">해결하는 문제</span> ${esc(x.cause||"-")}</div>
         ${(x.feats||[]).filter(f=>f.text).map((f,i)=>`<div>${CATS[f.cat]?.icon||"✅"} ${esc(f.text)}</div>`).join("")}
