@@ -1184,7 +1184,7 @@ const B = {
   },
   showSaved(){
     const el = $("#bSaved"); if(!el) return;
-    const im = IMG[S.group+"|"+BK()];
+    const im = S.gdata.imgs[BK()] ? IMG[S.group+"|"+BK()] : null;   // 선생님이 지우면 바로 사라져요
     el.innerHTML = im ? `<div class="savedpic"><div style="font-weight:700;margin-bottom:6px">✅ 저장된 내 건물 (${S.slot}번)</div><img src="${im.data}" alt=""><div style="margin-top:8px"><button class="btn sm" onclick="App.go(4)">🏘️ 마을에 놓으러 가기</button></div></div>` : "";
   },
   copy(){ const d = S.gdata.designs[BK()]; if(!d) return; copyText(buildPrompt(d, true)); toast("주문서를 복사했어요 📋"); },
@@ -1595,6 +1595,7 @@ const V = {
           <div style="font-size:13px;color:var(--sub)">${c.g}모둠 · 설계자 ${esc(whoLabel(it.r))}</div>
           ${d.cause?`<div class="q" style="margin:0">🌍 해결하는 문제: ${esc(d.cause)}</div>`:""}
           ${(d.feats||[]).filter(f=>f.text).map(f=>`<div class="real" style="margin:0">${CATS[f.cat]?.icon||"✅"} ${esc(f.text)}</div>`).join("")}
+          ${!S.name && V.mode ? `<button class="btn sm red" style="margin-top:6px" onclick="V.closeCard();T.delBuilding(${JSON.stringify(it.r).replace(/"/g,"&quot;")}, ${c.g})">🗑️ 이 건물 지우기 (선생님)</button>` : ""}
         </div>
       </div>
     </div>`;
@@ -1651,8 +1652,22 @@ const T = {
     await DB.update("g"+T.g, d => { d.notes = (d.notes||[]).filter(x=>x.id!==id); });
     T.load(T.g);
   },
+  // 한 학생 건물만 지우기: 설계 카드 + 건물 그림 + 마을에 놓은 건물
+  async delBuilding(who, g = T.g){
+    const gd = g===T.g && T.data ? T.data : await DB.get("g"+g);
+    const nm = gd.designs?.[who]?.name || "이름 없는 건물";
+    if(!await ask(`${g}모둠 '${nm}' (${whoLabel(who)})의 설계 카드, 건물 그림, 마을에 놓은 건물을 모두 지울까요?`)) return;
+    await DB.update("g"+g, d => { if(d.designs) delete d.designs[who]; if(d.imgs) delete d.imgs[who]; });
+    await DB.update(imgDocId(g, who), d => { d.data = ""; d.w = 0; d.h = 0; d.t = Date.now(); });
+    await DB.update("v"+g, d => { if(d.items) delete d.items["b_"+who]; });
+    delete IMG[g+"|"+who];
+    toast("건물을 지웠어요");
+    if($("#tVillage") && V.mode===g) V.loadView(g);
+    if(T.g===g) T.load(g);
+  },
   async resetGroup(){
     if(!await ask(`${T.g}모둠의 보드, 마을 컨셉, 건물 목록, 설계 카드, 마을, 들어온 학생 목록을 모두 지울까요?`)) return;
+    for(const who of Object.keys(T.data?.imgs||{})) await DB.update(imgDocId(T.g, who), d => { d.data = ""; d.w = 0; d.h = 0; });
     await DB.update("g"+T.g, d => { d.notes = []; d.buildings = []; d.designs = {}; d.imgs = {}; d.concept = null; d.pins = {}; });
     await DB.update("v"+T.g, d => { d.items = {}; d.ground = {}; d.likes = {}; });
     T.load(T.g);
@@ -1700,7 +1715,7 @@ const T = {
             </div>`).join("")}
           </div>
           <h3 style="margin:16px 0 8px">📐 학생 건물 설계 (${Object.keys(d.designs||{}).length}명)</h3>
-          ${Object.entries(d.designs||{}).map(([who,x])=>T.dcard(who,x)).join("") || `<p style="color:var(--sub)">아직 없어요</p>`}
+          ${[...new Set([...Object.keys(d.designs||{}), ...Object.keys(d.imgs||{})])].map(who=>T.dcard(who, (d.designs||{})[who]||{})).join("") || `<p style="color:var(--sub)">아직 없어요</p>`}
           <h3 style="margin:16px 0 8px">🏘️ 건물 목록</h3>
           ${(d.buildings||[]).map((b,i)=>`<div class="bitem"><div class="num">${i+1}</div><div class="info"><b>${esc(b.name)}</b> ${b.cats.map(k=>CATS[k].icon).join("")}<p>${esc(b.desc||"")}</p></div>${b.owner?`<span class="owner">👤 ${esc(b.owner)}</span>`:`<span class="owner" style="background:#ffe9e0;color:#c0502a">담당 없음</span>`}</div>`).join("") || `<p style="color:var(--sub)">아직 없어요</p>`}
         `}
@@ -1723,6 +1738,7 @@ T.dcard = (who, x) => {
         ${x.must?`<div><span class="k">꼭 지킬 것</span> ${esc(x.must)}</div>`:""}
         ${miss.length?`<div style="color:#c0502a;font-size:13px">빠진 것: ${miss.join(", ")}</div>`:""}
       </div>
+      <div style="margin-top:8px"><button class="btn sm red" onclick="T.delBuilding(${JSON.stringify(who).replace(/"/g,"&quot;")})">🗑️ 이 건물 지우기</button></div>
       <details style="margin-top:6px"><summary style="cursor:pointer;font-size:13px;color:var(--sub)">AI 주문서 보기</summary><div class="prompt" style="margin-top:6px">${esc(buildPrompt({feats:[], mats:[], ...x},true))}</div></details>
     </div>
   </div>`;
